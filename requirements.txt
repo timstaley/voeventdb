@@ -1,0 +1,6 @@
+SQLAlchemy
+nose
+psycopg2
+lxml
+flask-restless
+Flask-SQLAlchemy
