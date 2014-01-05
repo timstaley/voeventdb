@@ -22,9 +22,15 @@ def ingest_dir(topdir, session):
         ingest_xml_file(file_path, session)
 
 
-def ingest_xml_file(path, session):
-    with open(path) as f:
-        pkt_str = f.read()
+def ingest_xml_file(f, session):
+    """
+    **Args:**
+    f:
+        file object containing VOevent XML
+    session:
+        sqlalchemy session
+    """
+    pkt_str = f.read()
     pkt_tree = etree.fromstring(pkt_str)
     ivorn = pkt_tree.attrib['ivorn']
     voevent_row = Voevent(ivorn=ivorn, packet=pkt_str)

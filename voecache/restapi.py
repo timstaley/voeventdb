@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from flask import Flask
 import flask.ext.sqlalchemy
 
@@ -7,17 +8,15 @@ from voecache.models import Base, Voevent
 
 from flask.ext.restless import APIManager
 
+url_prefix = '/api/v0'
+
 app = Flask(__name__)
-app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = voecache_corpusdb_url
+
 db = flask.ext.sqlalchemy.SQLAlchemy(app)
 
 manager = APIManager(app, flask_sqlalchemy_db=db)
 
-
 voevent_blueprint = manager.create_api(Voevent,
+                                       url_prefix=url_prefix,
                                        methods=['GET'])
 
-
-if __name__ == '__main__':
-    app.run()

@@ -39,13 +39,15 @@ class DBTestBase(unittest.TestCase):
         self.session.close()
         self.__transaction.rollback()
 
+
 class TestDeclarativeSchema(DBTestBase):
     def test_table_create(self):
         results = self.session.query(Voevent).all()
         self.assertEqual(results,[])
 
     def test_voevent_insert(self):
-        ingest.ingest_xml_file(datapaths.swift_bat_grb_pos_v2, self.session)
+        with open(datapaths.swift_bat_grb_pos_v2) as f:
+            ingest.ingest_xml_file(f, self.session)
         results = self.session.query(Voevent).all()
         self.assertEqual(len(results), 1)
         with open(datapaths.swift_bat_grb_pos_v2) as f:
