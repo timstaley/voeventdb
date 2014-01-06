@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import unittest
-import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from lxml import etree
@@ -14,7 +13,7 @@ def setUpModule():
     if not db_utils.check_database_exists(voecache_testdb_url):
         db_utils.create_database(admin_db_url, voecache_testdb_url.database)
 
-    # Maybe overkill, but a useful trick:
+    # Maybe overkill, but a neat trick:
     # http://alextechrants.blogspot.co.uk/2013/08/unit-testing-sqlalchemy-apps.html
     # Performs all module tests, including table creation, in transaction
     # to be rolled back:

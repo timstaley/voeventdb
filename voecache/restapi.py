@@ -1,10 +1,8 @@
 from __future__ import absolute_import
 from flask import Flask
 import flask.ext.sqlalchemy
-
-from voecache import ingest, db_utils
-from voecache.tests.config import voecache_corpusdb_url, admin_db_url
-from voecache.models import Base, Voevent
+from voecache.models import Voevent
+from voecache.models import Base as predeclared_base
 
 from flask.ext.restless import APIManager
 
@@ -12,7 +10,11 @@ url_prefix = '/api/v0'
 
 app = Flask(__name__)
 
-db = flask.ext.sqlalchemy.SQLAlchemy(app)
+class KludgeAlchemy(flask.ext.sqlalchemy.SQLAlchemy):
+    def make_declarative_base(self):
+        return predeclared_base
+
+db = KludgeAlchemy(app)
 
 manager = APIManager(app, flask_sqlalchemy_db=db)
 
