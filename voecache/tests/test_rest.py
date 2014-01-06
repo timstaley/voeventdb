@@ -27,22 +27,34 @@ class RestTestBase(flask.ext.testing.TestCase):
     
     def setUp(self):
         #flask-testing cheekily takes care of the 'super' call for us.
-        self.db =restapi.db 
-        self.db.engine. 
+        self.db =restapi.db
         self.db.create_all()
         self.prefix = restapi.url_prefix + '/voevent'
-        print ""
-        print
-        print "HELLO???"
-        print
+
+
     def tearDown(self):
         #flask-testing cheekily takes care of the 'super' call for us.
         self.db.session.remove()
         self.db.drop_all()
         
 
-class TestRestEmptyResponse(RestTestBase):
+class TestEmptyResponse(RestTestBase):
     def test_empty_response(self):
+        r = self.client.get(self.prefix)
+        self.assert200(r)
+        self.assertEqual(r.json['num_results'], 0)
+
+class TestSingleVoevent(RestTestBase):
+    def test_empty_response(self):
+        with open(datapaths.swift_bat_grb_pos_v2) as f:
+            ingest.ingest_xml_file(f, self.db.session)
         self.db.session.commit()
         r = self.client.get(self.prefix)
-        print r.data
+        self.assert200(r)
+        results = r.json['objects']
+        self.assertEqual(r.json['num_results'], 1)
+        self.assertEqual(r.json['num_results'], len(results))
+        with open(datapaths.swift_bat_grb_pos_v2) as f:
+            root = etree.parse(f).getroot()
+        self.assertEqual(results[0]['ivorn'], root.attrib['ivorn'])
+
