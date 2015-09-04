@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+
 from flask import Flask
 import flask.ext.sqlalchemy
-from voecache.models import Voevent
-from voecache.models import Base as predeclared_base
-
 from flask.ext.restless import APIManager
+
+from voeventcache.database.models import Voevent
+from voeventcache.database.models import Base as predeclared_base
 
 url_prefix = '/api/v0'
 

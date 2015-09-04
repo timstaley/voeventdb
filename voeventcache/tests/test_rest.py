@@ -1,19 +1,11 @@
 from __future__ import absolute_import
 
-import sqlalchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-
 from lxml import etree
 
 import flask.ext.testing
-
-from voecache.models import Base, Voevent
-from voecache import db_utils, ingest
-from voecache.tests.config import (admin_db_url,
-                                   voecache_testdb_url)
-from voecache.tests.resources import datapaths
-from voecache import restapi
+from voeventcache.database.models import Voevent
+from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
+from voeventcache.restapi import restapi
 
 class RestTestBase(flask.ext.testing.TestCase):
     """
@@ -46,15 +38,13 @@ class TestEmptyResponse(RestTestBase):
 
 class TestSingleVoevent(RestTestBase):
     def test_empty_response(self):
-        with open(datapaths.swift_bat_grb_pos_v2) as f:
-            ingest.ingest_xml_file(f, self.db.session)
+        self.db.session.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
         self.db.session.commit()
         r = self.client.get(self.prefix)
         self.assert200(r)
         results = r.json['objects']
         self.assertEqual(r.json['num_results'], 1)
         self.assertEqual(r.json['num_results'], len(results))
-        with open(datapaths.swift_bat_grb_pos_v2) as f:
-            root = etree.parse(f).getroot()
-        self.assertEqual(results[0]['ivorn'], root.attrib['ivorn'])
+        self.assertEqual(results[0]['ivorn'],
+                         swift_bat_grb_pos_v2_etree.attrib['ivorn'])
 

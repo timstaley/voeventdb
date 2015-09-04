@@ -2,19 +2,16 @@
 
 import sys
 import os
-import fnmatch
 import argparse
 import logging
 
 from sqlalchemy.engine.url import make_url
 from sqlalchemy import create_engine
+
 from sqlalchemy.orm import Session
 
-import voecache
-from voecache import ingest, db_utils
-from voecache.tests.config import voecache_corpusdb_url, admin_db_url
-from voecache.models import Base, Voevent
-
+from voeventcache.database import ingest, db_utils
+from voeventcache.tests.config import voecache_corpusdb_url
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vo-ingest")

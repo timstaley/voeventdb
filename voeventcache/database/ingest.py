@@ -1,13 +1,15 @@
-import sys
 import os
 import fnmatch
-import argparse
 import logging
-from lxml import etree
 
-from voecache.models import  Voevent
+from lxml import etree
+import voeventparse as vp
+from voeventcache.database.models import  Voevent
 
 logger = logging.getLogger(__name__)
+
+
+
 
 def ingest_dir(topdir, session):
     logger.info("Scanning: " + topdir)
@@ -22,16 +24,3 @@ def ingest_dir(topdir, session):
         ingest_xml_file(file_path, session)
 
 
-def ingest_xml_file(f, session):
-    """
-    **Args:**
-    f:
-        file object containing VOevent XML
-    session:
-        sqlalchemy session
-    """
-    pkt_str = f.read()
-    pkt_tree = etree.fromstring(pkt_str)
-    ivorn = pkt_tree.attrib['ivorn']
-    voevent_row = Voevent(ivorn=ivorn, packet=pkt_str)
-    session.add(voevent_row)
