@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from voeventcache.database import ingest, db_utils
-from voeventcache.tests.config import voecache_corpusdb_url
+from voeventcache.tests.config import testdb_corpus_url
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vo-ingest")
@@ -31,7 +31,7 @@ def handle_args():
     """
 
 
-    default_database_url = voecache_corpusdb_url
+    default_database_url = testdb_corpus_url
     parser = argparse.ArgumentParser(prog=os.path.basename(__file__))
     parser.add_argument('folder_to_process',
                         nargs='?',

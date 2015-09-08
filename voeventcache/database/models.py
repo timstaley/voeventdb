@@ -1,6 +1,9 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Integer, Column, String, DateTime
 import voeventparse as vp
+from datetime import datetime
+import iso8601
+import pytz
 
 Base = declarative_base()
 
@@ -24,7 +27,6 @@ class Voevent(Base):
     __tablename__ = 'voevent'
     id = Column(Integer, primary_key=True)
     ivorn = Column(String, nullable=False, unique=True, index=True)
-    xml = Column(String)
     received = Column(
         DateTime(timezone=True), nullable=False,
         doc="Records when the packet was loaded into the database"
@@ -36,15 +38,42 @@ class Voevent(Base):
     author_ivorn = Column(String)
     author_datetime = Column(DateTime(timezone=True))
 
+    #Define the XML last - makes some command-line queries easier to view!
+    xml = Column(String)
+
     def __repr__(self):
-        return "<Voevent(ivorn='{}')>".format(self.ivorn)
+        return """
+        <Voevent(ivorn={ivorn},
+                 received={recv},
+                 author_date={adate}
+                 )
+        >""".format(ivorn=self.ivorn,
+                    recv=repr(self.received),
+                    adate=repr(self.author_datetime))
+
+    def __str__(self):
+        return """
+        <Voevent(ivorn={ivorn},
+                 received={recv},
+                 author_date={adate}
+                 )
+        >""".format(ivorn=self.ivorn,
+                    recv=(self.received),
+                    adate=(self.author_datetime))
 
     @staticmethod
-    def from_etree(root):
+    def from_etree(root, received=pytz.UTC.localize(datetime.utcnow())):
         """
         Init a Voevent row from an LXML etree loaded with voevent-parse
         """
+        if root.xpath('Who/Date'):
+            author_datetime = iso8601.parse_date(root.Who.Date.text)
+        else:
+            author_datetime = None
+
         row = Voevent(ivorn=root.attrib['ivorn'],
-                              xml=vp.dumps(root),
-                              received=root.Who.Date.text)
+                      xml=vp.dumps(root),
+                      received=received,
+                      author_datetime=author_datetime,
+                      )
         return row

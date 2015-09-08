@@ -9,7 +9,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy import create_engine
 
 from voeventcache.database import db_utils
-from voeventcache.tests.config import voecache_corpusdb_url, admin_db_url
+from voeventcache.tests.config import testdb_corpus_url, admin_db_url
 from voeventcache.database.models import Base
 
 logging.basicConfig(level=logging.DEBUG)
@@ -23,7 +23,7 @@ def handle_args():
     """
     Default values are defined here.
     """
-    default_database_url = voecache_corpusdb_url
+    default_database_url = testdb_corpus_url
     parser = argparse.ArgumentParser(prog=os.path.basename(__file__))
 
     parser.add_argument('database_url',

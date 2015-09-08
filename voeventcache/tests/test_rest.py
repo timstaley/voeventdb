@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from lxml import etree
+import unittest
 
 import flask.ext.testing
 from voeventcache.database.models import Voevent
@@ -36,6 +37,7 @@ class TestEmptyResponse(RestTestBase):
         self.assert200(r)
         self.assertEqual(r.json['num_results'], 0)
 
+@unittest.skip
 class TestSingleVoevent(RestTestBase):
     def test_empty_response(self):
         self.db.session.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
