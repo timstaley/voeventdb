@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 from voeventcache.database.models import Base, Voevent
+from voeventcache.database.convenience import ivorn_present
 from voeventcache.database import db_utils
 from voeventcache.tests.config import (admin_db_url,
                                    testdb_empty_url)
@@ -83,10 +84,14 @@ class TestBasicInsert(DBTestCase):
             self.session.flush()
 
 class TestBasicInsertsAndQueries(DBTestCase):
-    def test_multiple_voevent_insert(self):
+    """
+    Basic sanity checks. Serves as SQLAlchemy examples as much as anything.
+    """
+    def setUp(self):
         """
         Insert a few VOEvents
         """
+        super(TestBasicInsertsAndQueries, self).setUp()
         start = datetime(2015, 1, 1)
         interval = timedelta(minutes=15)
         n_interval = 4*6
@@ -94,9 +99,42 @@ class TestBasicInsertsAndQueries(DBTestCase):
                                start+n_interval*interval,
                                interval)
         self.assertEqual(n_interval,len(packets))
-        self.session.add_all((Voevent.from_etree(p) for p in packets))
+        self.insert_packets = packets[:-1]
+        self.remaining_packet = packets[-1]
+        #Insert all but the last packet, this gives us a useful counter-example
+        self.session.add_all((Voevent.from_etree(p) for p in self.insert_packets))
+        self.n_inserts = len(self.insert_packets)
+        self.inserted_ivorn = self.insert_packets[0].attrib['ivorn']
+        self.absent_ivorn = self.remaining_packet.attrib['ivorn']
+
+        # for r in self.session.query(Voevent).all():
+        #     print r
+
+    def test_ivorns(self):
         inserted = self.session.query(Voevent).all()
-        self.assertEqual(len(inserted), len(packets))
-        pkt_ivorns = [p.attrib['ivorn'] for p in packets]
+        self.assertEqual(len(inserted), len(self.insert_packets))
+        pkt_ivorns = [p.attrib['ivorn'] for p in self.insert_packets]
         inserted_ivorns = [v.ivorn for v in inserted]
         self.assertEqual(pkt_ivorns, inserted_ivorns)
+
+
+        n_matches = self.session.query(Voevent).filter(
+            Voevent.ivorn==self.inserted_ivorn).count()
+        self.assertEqual(n_matches,1)
+
+        n_matches = self.session.query(Voevent).filter(
+            Voevent.ivorn==self.absent_ivorn).count()
+        self.assertEqual(n_matches,0)
+
+        n_ivorn_prefix_match = self.session.query(Voevent.ivorn).filter(
+            Voevent.ivorn.like('ivo://voevent.organization.tld/TEST%')).count()
+        self.assertEqual(n_ivorn_prefix_match, self.n_inserts)
+        n_ivorn_substr_match = self.session.query(Voevent.ivorn).filter(
+            Voevent.ivorn.like('%voevent.organization.tld/TEST%')).count()
+        self.assertEqual(n_ivorn_substr_match, self.n_inserts)
+
+    def test_convenience_funcs(self):
+        self.assertTrue(ivorn_present(self.session, self.inserted_ivorn))
+        self.assertFalse(ivorn_present(self.session, self.absent_ivorn))
+
+
