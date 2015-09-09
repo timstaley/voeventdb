@@ -19,18 +19,13 @@ admin_db_params = dict(drivername=drivername,
 admin_db_url = URL(**admin_db_params)
 
 
-testdb_temp_params = admin_db_params.copy()
-testdb_temp_params['database'] = '_voecache_test_temp'
-testdb_temp_url = URL(**testdb_temp_params)
+def make_testdb_url(dbsuffix):
+    dbprefix = '_voecache_test_'
+    db_params = admin_db_params.copy()
+    db_params['database'] = dbprefix+dbsuffix
+    return URL(**db_params)
 
-testdb_empty_params = admin_db_params.copy()
-testdb_empty_params['database'] = '_voecache_test_empty'
-testdb_empty_url = URL(**testdb_empty_params)
-
-testdb_corpus_params = admin_db_params.copy()
-testdb_corpus_params['database'] = '_voecache_test_corpus'
-testdb_corpus_url = URL(**testdb_corpus_params)
-
-testdb_scratch_params = admin_db_params.copy()
-testdb_scratch_params['database'] = '_voecache_test_manual'
-testdb_scratch_url = URL(**testdb_scratch_params)
+testdb_temp_url = make_testdb_url('temp')
+testdb_empty_url = make_testdb_url('empty')
+testdb_corpus_url = make_testdb_url('corpus')
+testdb_scratch_url = make_testdb_url('scratch')

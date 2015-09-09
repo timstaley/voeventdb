@@ -72,9 +72,8 @@ class TestBasicInsert(DBTestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].ivorn,
                          swift_bat_grb_pos_v2_etree.attrib['ivorn'])
-        print
-        print results[0]
-        print repr(results[0])
+        # print
+        # print results[0]
 
 
     def test_unique_ivorn_constraint(self):

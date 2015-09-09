@@ -1,11 +1,24 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Integer, Column, String, DateTime
+from sqlalchemy import Column
+import sqlalchemy as sql
 import voeventparse as vp
 from datetime import datetime
 import iso8601
 import pytz
+from collections import OrderedDict
 
 Base = declarative_base()
+
+
+def _grab_xpath(root, xpath, converter=lambda x: x):
+    """
+    XML convenience - grabs the first element at xpath if present, else returns None.
+    """
+    elements = root.xpath(xpath)
+    if elements:
+        return converter(str(elements[0]))
+    else:
+        return None
 
 
 class Voevent(Base):
@@ -23,57 +36,62 @@ class Voevent(Base):
         with partitioning really large datasets, cf:
         http://justatheory.com/computers/databases/postgresql/use-timestamptz.html
         http://www.postgresql.org/docs/9.1/static/ddl-partitioning.html
+
     """
     __tablename__ = 'voevent'
-    id = Column(Integer, primary_key=True)
-    ivorn = Column(String, nullable=False, unique=True, index=True)
+    # Basics: Attributes or associated metadata present for **every** VOEvent:
+    id = Column(sql.Integer, primary_key=True)
     received = Column(
-        DateTime(timezone=True), nullable=False,
+        sql.DateTime(timezone=True), nullable=False,
         doc="Records when the packet was loaded into the database"
     )
-
-    # Who section:
-    # We expect these to be present in most if not all packets, but
-    # technically they can be absent and still VOE2-schema-valid.
-    author_ivorn = Column(String)
-    author_datetime = Column(DateTime(timezone=True))
-
-    #Define the XML last - makes some command-line queries easier to view!
-    xml = Column(String)
-
-    def __repr__(self):
-        return """
-        <Voevent(ivorn={ivorn},
-                 received={recv},
-                 author_date={adate}
-                 )
-        >""".format(ivorn=self.ivorn,
-                    recv=repr(self.received),
-                    adate=repr(self.author_datetime))
-
-    def __str__(self):
-        return """
-        <Voevent(ivorn={ivorn},
-                 received={recv},
-                 author_date={adate}
-                 )
-        >""".format(ivorn=self.ivorn,
-                    recv=(self.received),
-                    adate=(self.author_datetime))
+    ivorn = Column(sql.String, nullable=False, unique=True, index=True)
+    role = Column(sql.Enum(vp.definitions.roles.observation,
+                           vp.definitions.roles.prediction,
+                           vp.definitions.roles.utility,
+                           vp.definitions.roles.test,
+                           name="roles_enum"
+                           ))
+    # Who
+    author_ivorn = Column(sql.String)
+    author_datetime = Column(sql.DateTime(timezone=True))
+    # Finally, the raw XML
+    xml = Column(sql.String)
 
     @staticmethod
     def from_etree(root, received=pytz.UTC.localize(datetime.utcnow())):
         """
         Init a Voevent row from an LXML etree loaded with voevent-parse
         """
-        if root.xpath('Who/Date'):
-            author_datetime = iso8601.parse_date(root.Who.Date.text)
-        else:
-            author_datetime = None
-
         row = Voevent(ivorn=root.attrib['ivorn'],
+                      role=root.attrib['role'],
                       xml=vp.dumps(root),
                       received=received,
-                      author_datetime=author_datetime,
                       )
+        row.author_datetime = _grab_xpath(root, 'Who/Date',
+                                          converter=iso8601.parse_date)
+        row.author_ivorn = _grab_xpath(root, 'Who/AuthorIVORN')
         return row
+
+    def to_odict(self):
+        """
+        Returns an OrderedDict representation of the Voevent row.
+        """
+        colnames = [c.name for c in self.__table__.columns]
+        return OrderedDict( ((col , getattr(self, col)) for col in colnames))
+
+
+    def _reformatted_prettydict(self, valformat=str):
+        pd = self.prettydict()
+        return '\n'.join(("{}={}".format(k,valformat(v)) for k,v in pd.iteritems()))
+
+    def __repr__(self):
+        od = self.to_odict()
+        content = ',\n'.join(("{}={}".format(k,repr(v)) for k,v in od.iteritems()))
+        return """<Voevent({})>""".format(content)
+
+    def __str__(self):
+        od = self.to_odict()
+        od.pop('xml')
+        content = ',\n    '.join(("{}={}".format(k,str(v)) for k,v in od.iteritems()))
+        return """<Voevent({})>""".format(content)
