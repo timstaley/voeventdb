@@ -1,4 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import deferred
 from sqlalchemy import Column
 import sqlalchemy as sql
 import voeventparse as vp
@@ -55,8 +56,9 @@ class Voevent(Base):
     # Who
     author_ivorn = Column(sql.String)
     author_datetime = Column(sql.DateTime(timezone=True))
-    # Finally, the raw XML
-    xml = Column(sql.String)
+    # Finally, the raw XML. Mark this for lazy-loading, cf:
+    # http://docs.sqlalchemy.org/en/latest/orm/loading_columns.html
+    xml = deferred(Column(sql.String))
 
     @staticmethod
     def from_etree(root, received=pytz.UTC.localize(datetime.utcnow())):
