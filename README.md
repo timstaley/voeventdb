@@ -30,3 +30,11 @@ the [test config file](voeventcache/tests/config.py).
 Alternatively, edit 
 [pg_hba.conf](http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html)
 appropriately, or consult a friendly sysadmin.
+
+A final word on Postgres setup - I recommend setting 
+
+    timezone = 'UTC'
+    
+in *postgresql.conf*, this ensures that all timestamps are displayed in UTC 
+both when querying the database via the command line, and when returning 
+`datetime` objects via the SQLAlchemy API.

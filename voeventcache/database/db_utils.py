@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
 
+
 def check_database_exists(db_url):
     engine = sqlalchemy.create_engine(db_url)
     try:

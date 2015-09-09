@@ -28,8 +28,8 @@ def setUpModule():
 
 def tearDownModule():
     ## Roll back the top level transaction and disconnect from the database
-    transaction.commit() #Leave the database around for manual inspection
-    # transaction.rollback()
+    # transaction.commit() #Leave the database around for manual inspection
+    transaction.rollback()
     connection.close()
     engine.dispose()
 

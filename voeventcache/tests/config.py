@@ -31,3 +31,6 @@ testdb_corpus_params = admin_db_params.copy()
 testdb_corpus_params['database'] = '_voecache_test_corpus'
 testdb_corpus_url = URL(**testdb_corpus_params)
 
+testdb_scratch_params = admin_db_params.copy()
+testdb_scratch_params['database'] = '_voecache_test_manual'
+testdb_scratch_url = URL(**testdb_scratch_params)
