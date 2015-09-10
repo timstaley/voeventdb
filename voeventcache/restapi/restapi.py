@@ -1,32 +1,26 @@
 from __future__ import absolute_import
+from flask import Flask, jsonify
 
-from flask import Flask
-import flask.ext.sqlalchemy
-from flask.ext.restless import APIManager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from voeventcache.database.models import Voevent
-from voeventcache.database.models import Base as predeclared_base
 
-url_prefix = '/api/v0'
+rest_app = Flask(__name__)
 
-app = Flask(__name__)
+#Use the 'magic' sqlalchemy thread-local-singleton session-maker/session-proxy thing.
+#Configure this with an engine of choice before instantiating
+db_session = scoped_session(sessionmaker())
 
-class KludgeAlchemy(flask.ext.sqlalchemy.SQLAlchemy):
-    """
-    Flask-Sqlalchemy provides no configuration options for using a predeclared Base;
-    you must declare your model via flask.sqlalchemy.db.
-    This seems like a weird coupling choice - what if I prefer to keep my models purely reliant on SQLAlchemy?
-    (see also https://github.com/mitsuhiko/flask-sqlalchemy/pull/61 )
-    Fortunately, it's very easy to override the default behaviour.
-    """
-    def make_declarative_base(self):
-        return predeclared_base
+@rest_app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
 
-db = KludgeAlchemy(app)
+@rest_app.route('/')
+def hello_world():
+    return 'Hello World!\n\n'
 
-manager = APIManager(app, flask_sqlalchemy_db=db)
-
-voevent_blueprint = manager.create_api(Voevent,
-                                       url_prefix=url_prefix,
-                                       methods=['GET'])
-
+@rest_app.route('/count')
+def voevents_in_database():
+    n_voevent = db_session.query(Voevent).count()
+    return jsonify({'count':n_voevent})
