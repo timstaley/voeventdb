@@ -20,8 +20,6 @@ class TestBasicRoutines(TestCase):
 
     def test_heartbeat(self):
         n_interval = 4*6
-        packets = fake.heartbeat_packets(self.start,
-                                         self.start + self.interval*n_interval,
-                                         self.interval
-                                         )
+        packets = fake.heartbeat_packets(self.start, self.interval,
+                                         n_interval)
         self.assertEqual(n_interval, len(packets))

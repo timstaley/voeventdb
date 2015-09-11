@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 import unittest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+# from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 
 from voeventcache.database.models import Base, Voevent
 from voeventcache.database.convenience import ivorn_present
-from voeventcache.database import db_utils
+from voeventcache.database import db_utils, db_session
 from voeventcache.tests.config import (admin_db_url,
                                    testdb_empty_url)
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
@@ -43,9 +42,13 @@ class DBTestCase(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.__transaction = connection.begin_nested()
-        self.session = Session(connection)
+
+        # self.session = Session(connection)
+        db_session.configure(bind=connection)
+        self.session = db_session()
     def tearDown(self):
-        self.session.close()
+        # self.session.close()
+        db_session.remove()
         self.__transaction.rollback()
 
 
@@ -95,9 +98,8 @@ class TestBasicInsertsAndQueries(DBTestCase):
         start = datetime(2015, 1, 1)
         interval = timedelta(minutes=15)
         n_interval = 4*6
-        packets = fake.heartbeat_packets(start,
-                               start+n_interval*interval,
-                               interval)
+        packets = fake.heartbeat_packets(start, interval,
+                                         n_interval)
         self.assertEqual(n_interval,len(packets))
         self.insert_packets = packets[:-1]
         self.remaining_packet = packets[-1]
