@@ -1,23 +1,22 @@
 from __future__ import absolute_import
-import unittest
-
-import sqlalchemy
-import sqlalchemy.engine
 
 import voeventcache.database.db_utils as db_utils
 from voeventcache.tests.config import (admin_db_url, testdb_temp_url)
 
-
-class TestDBCreateCheckDestroy(unittest.TestCase):
-    def test_check_exists(self):
-        self.assertFalse(db_utils.check_database_exists(testdb_temp_url))
-        self.assertTrue(db_utils.check_database_exists(admin_db_url))
+class TestDBCreateCheckDestroy:
+    def test_starting_conditions(self):
+        # Make sure we have access to an admin database, and the tempdb
+        # has not already been created.
+        assert db_utils.check_database_exists(testdb_temp_url) == False
+        assert db_utils.check_database_exists(admin_db_url) == True
 
     def test_create_check_delete(self):
-        self.assertFalse(db_utils.check_database_exists(testdb_temp_url))
+        # DB should be absent to start off with
+        assert db_utils.check_database_exists(testdb_temp_url) == False
+        # Now create it
         db_utils.create_database(admin_db_url, testdb_temp_url.database)
-        self.assertTrue(db_utils.check_database_exists(testdb_temp_url),
-                        'Database was not created')
+        assert db_utils.check_database_exists(testdb_temp_url) == True
+        # And delete it again
         db_utils.delete_database(admin_db_url, testdb_temp_url.database)
-        self.assertFalse(db_utils.check_database_exists(testdb_temp_url),
-                         "Database was not deleted")
+        assert db_utils.check_database_exists(testdb_temp_url) == False
+

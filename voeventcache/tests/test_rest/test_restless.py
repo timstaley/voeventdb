@@ -1,52 +1,35 @@
 from __future__ import absolute_import
-
-from lxml import etree
-import unittest
-
-import flask.ext.testing
-from voeventcache.database.models import Voevent
+import pytest
+import json
+from flask import url_for
+from voeventcache.restapi.restlessapi import restless_voevent_url
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
-from voeventcache.restapi import restlessapi
+from voeventcache.database.models import Voevent
 
-class RestTestBase(flask.ext.testing.TestCase):
-    """
-    NB too much magic happening under flask extensions to use session rollback;
-    just use an in-memory SQLite DB for these tests.
-    """
-    def create_app(self):
-        restlessapi.restless_app.config['TESTING'] = True
-        restlessapi.restless_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-        return restlessapi.restless_app
-    
-    def setUp(self):
-        #flask-testing cheekily takes care of the 'super' call for us.
-        self.db =restlessapi.db
-        self.db.create_all()
-        self.prefix = restlessapi.url_prefix + '/voevent'
+#Ensure dbsession gets correctly configured to empty db:
+pytestmark = pytest.mark.usefixtures('empty_db_session')
 
 
-    def tearDown(self):
-        #flask-testing cheekily takes care of the 'super' call for us.
-        self.db.session.remove()
-        self.db.drop_all()
-        
+def test_empty_database(flask_test_client):
+    c = flask_test_client
+    rv = c.get(restless_voevent_url)
+    assert rv.status_code == 200
+    assert json.loads(rv.data)['num_results'] == 0
 
-class TestEmptyResponse(RestTestBase):
-    def test_empty_response(self):
-        r = self.client.get(self.prefix)
-        self.assert200(r)
-        self.assertEqual(r.json['num_results'], 0)
 
-@unittest.skip
-class TestSingleVoevent(RestTestBase):
-    def test_empty_response(self):
-        self.db.session.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
-        self.db.session.commit()
-        r = self.client.get(self.prefix)
-        self.assert200(r)
-        results = r.json['objects']
-        self.assertEqual(r.json['num_results'], 1)
-        self.assertEqual(r.json['num_results'], len(results))
-        self.assertEqual(results[0]['ivorn'],
-                         swift_bat_grb_pos_v2_etree.attrib['ivorn'])
+
+
+def test_single_voevent(empty_db_session, flask_test_client):
+    s = empty_db_session
+    tc = flask_test_client
+    s.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
+    s.commit()
+    rv = tc.get(restless_voevent_url)
+    assert rv.status_code == 200
+    data = json.loads(rv.data)
+    rows = data['objects']
+    assert data['num_results'] == 1
+    assert data['num_results'] == len(rows)
+    assert rows[0]['ivorn'] == swift_bat_grb_pos_v2_etree.attrib['ivorn']
+    print rows[0]
 

@@ -5,6 +5,7 @@ lxml
 flask-restless
 Flask-SQLAlchemy
 flask-restful
-flask-testing
 voevent-parse
 iso8601
+pytest
+
