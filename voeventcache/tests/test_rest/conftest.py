@@ -7,7 +7,7 @@ from voeventcache.tests.fixtures.connection import (
 from voeventcache.restapi.app import app
 
 @pytest.yield_fixture
-def flask_test_client():
+def flask_test_client(empty_db_connection):
     print
     print "setting up flask client"
     app.testing = True

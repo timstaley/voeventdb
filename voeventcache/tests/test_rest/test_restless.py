@@ -6,7 +6,7 @@ from voeventcache.restapi.restlessapi import restless_voevent_url
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
 from voeventcache.database.models import Voevent
 
-#Ensure dbsession gets correctly configured to empty db:
+# Ensure dbsession gets correctly configured to empty db:
 pytestmark = pytest.mark.usefixtures('empty_db_session')
 
 
@@ -15,8 +15,6 @@ def test_empty_database(flask_test_client):
     rv = c.get(restless_voevent_url)
     assert rv.status_code == 200
     assert json.loads(rv.data)['num_results'] == 0
-
-
 
 
 def test_single_voevent(empty_db_session, flask_test_client):
@@ -32,4 +30,3 @@ def test_single_voevent(empty_db_session, flask_test_client):
     assert data['num_results'] == len(rows)
     assert rows[0]['ivorn'] == swift_bat_grb_pos_v2_etree.attrib['ivorn']
     print rows[0]
-

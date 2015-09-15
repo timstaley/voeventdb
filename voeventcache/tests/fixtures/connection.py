@@ -5,7 +5,15 @@ from voeventcache.database import db_utils, db_session
 from voeventcache.database.models import Base
 
 import pytest
-@pytest.yield_fixture(scope='session')
+
+
+# Would like to use 'session' scoped fixture - i.e. create once for all
+# unit-tests.
+# But for some reason it still gets called a second time (before destruction of
+# first fixture!) and we hit a database contention lock-up.
+# For now, we just make it module-level.
+#
+@pytest.yield_fixture(scope='module')
 def empty_db_connection(request):
     """
     Connect to db, create tables and begin connection-level (outer) transaction.
@@ -27,19 +35,22 @@ def empty_db_connection(request):
     # test_db_url = getattr(request.module, "test_db_url", testdb_empty_url)
     test_db_url = testdb_empty_url
     if not db_utils.check_database_exists(test_db_url):
+        print "Creating database"
         db_utils.create_database(admin_db_url, test_db_url.database)
+    print
+    print "Initializing the database"
     engine = create_engine(test_db_url)
     connection = engine.connect()
     transaction = connection.begin()
+    # Create tables (will be rolled back to clean)
     Base.metadata.create_all(connection)
-    print
-    print "Initializing the database"
+    print "Database tables created"
 
-    #Returned to test function
+    # Returned to test function
     yield connection
     print
     print "Tearing down the database"
-    #TearDown
+    # TearDown
     transaction.rollback()
     connection.close()
     engine.dispose()
