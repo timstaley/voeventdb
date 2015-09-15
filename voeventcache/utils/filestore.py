@@ -59,3 +59,37 @@ def write_tarball(ivorn_xml_tuples, filepath):
             ))
     finally:
         out.close()
+
+def tarfile_xml_generator(fname):
+    """
+    Generator for iterating through xml files in a tarball.
+
+    Returns strings.
+
+    Example usage::
+
+        xmlgen = tarfile_xml_generator(fname)
+        xml0 = next(xmlgen)
+
+        for pkt in xmlgen:
+            foo(pkt)
+
+    """
+    tf = tarfile.open(fname, mode='r')
+    try:
+        tarinf = tf.next()
+        while tarinf is not None:
+            if  tarinf.isfile() and tarinf.name[-4:] == '.xml':
+                fbuf = tf.extractfile(tarinf)
+                yield fbuf.read()
+            tarinf = tf.next()
+    finally:
+        tf.close()
+
+def tarfile_voevent_generator(fname):
+    """
+    Like `tarfile_xml_generator`, but loads strings as voevents.
+    """
+    tfgen = tarfile_xml_generator(fname)
+    for s in tfgen:
+        yield voeventparse.loads(s)
