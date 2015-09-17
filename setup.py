@@ -12,10 +12,15 @@ install_requires = [
     'voevent-parse',
 ]
 
-extras_require = {
-    'tests': ['pytest','tox'],
-}
+test_requires = [
+    'pytest',
+    'tox',
+]
 
+extras_require = {
+    'test': test_requires,
+    'all': test_requires,
+}
 packages = find_packages()
 print
 print "FOUND PACKAGES: ", packages
@@ -31,6 +36,5 @@ setup(
     author_email="timstaley337@gmail.com",
     url="https://github.com/timstaley/voeventcache",
     install_requires=install_requires,
-    extras_require=extras_require,
-    test_suite='voeventcache.tests'
+    extras_require=extras_require
 )

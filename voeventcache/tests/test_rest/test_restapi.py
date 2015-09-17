@@ -20,6 +20,8 @@ class TestWithEmptyDatabase:
         assert rv.status_code ==  200
 
     def test_api_count(self):
-        rv = self.c.get(url_for('apiv0.voevents_in_database'))
+        rv = self.c.get(url_for('apiv0.get_count'))
+        rd = json.loads(rv.data)
         assert rv.status_code ==  200
-        assert json.loads(rv.data) == dict(count=0)
+        assert rd['count'] == 0
+        

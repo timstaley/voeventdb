@@ -35,10 +35,12 @@ def test_tarball_round_trip(named_temporary_file):
         (filestore.voevent_to_ivorn_xml_tuple(v) for v in voevents),
         fname
     )
-    voegen = filestore.tarfile_voevent_generator(fname)
+
+    loaded_voevents = list(filestore.tarfile_voevent_generator(fname))
     def to_strings(voeventlist):
         return [vp.dumps(v) for v in voeventlist]
     def to_ivorn(voeventlist):
         return [v.attrib['ivorn'] for v in voeventlist]
 
-    assert (to_ivorn(voevents) == to_ivorn(voegen))
+    assert (to_ivorn(voevents) == to_ivorn(loaded_voevents))
+    assert (to_strings(voevents) == to_strings(loaded_voevents))

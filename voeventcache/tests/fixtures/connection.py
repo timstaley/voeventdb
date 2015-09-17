@@ -35,27 +35,18 @@ def empty_db_connection(request):
     # test_db_url = getattr(request.module, "test_db_url", testdb_empty_url)
     test_db_url = testdb_empty_url
     if not db_utils.check_database_exists(test_db_url):
-        print "Creating database"
         db_utils.create_database(admin_db_url, test_db_url.database)
-    print
-    print "Initializing the database"
     engine = create_engine(test_db_url)
     connection = engine.connect()
     transaction = connection.begin()
     # Create tables (will be rolled back to clean)
     Base.metadata.create_all(connection)
-    print "Database tables created"
-
-    # Returned to test function
+    # Return to test function
     yield connection
-    print
-    print "Tearing down the database"
     # TearDown
     transaction.rollback()
     connection.close()
     engine.dispose()
-    print
-    print "Disposed."
 
 
 @pytest.yield_fixture
@@ -65,12 +56,8 @@ def empty_db_session(empty_db_connection):
 
     We use nested transactions to return the database to empty after each test.
     """
-    print
-    print "Nesting transaction"
     nested_transaction = empty_db_connection.begin_nested()
     db_session.configure(bind=empty_db_connection)
     yield db_session
-    print
-    print "Cleaning up the nest"
     db_session.remove()
     nested_transaction.rollback()
