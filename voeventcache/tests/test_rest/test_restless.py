@@ -7,7 +7,7 @@ from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
 from voeventcache.database.models import Voevent
 
 # Ensure dbsession gets correctly configured to empty db:
-pytestmark = pytest.mark.usefixtures('empty_db_session')
+pytestmark = pytest.mark.usefixtures('fixture_db_session')
 
 
 def test_empty_database(flask_test_client):
@@ -17,8 +17,8 @@ def test_empty_database(flask_test_client):
     assert json.loads(rv.data)['num_results'] == 0
 
 
-def test_single_voevent(empty_db_session, flask_test_client):
-    s = empty_db_session
+def test_single_voevent(fixture_db_session, flask_test_client):
+    s = fixture_db_session
     tc = flask_test_client
     s.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
     s.commit()

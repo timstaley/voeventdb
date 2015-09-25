@@ -5,7 +5,7 @@ import json
 from flask import url_for
 
 
-@pytest.mark.usefixtures('empty_db_session')
+@pytest.mark.usefixtures('fixture_db_session')
 class TestWithEmptyDatabase:
     @pytest.fixture(autouse=True)
     def assign_test_client(self, flask_test_client):
@@ -25,7 +25,6 @@ class TestWithEmptyDatabase:
         assert rv.status_code ==  200
         assert rd['count'] == 0
 
-@pytest.mark.usefixtures('simple_db_fixture')
 class TestWithSimpleDatabase:
     @pytest.fixture(autouse=True)
     def assign_test_client_and_initdb(self, flask_test_client):
@@ -39,8 +38,8 @@ class TestWithSimpleDatabase:
         rv = self.c.get(apiv0.url_prefix+'/')
         assert rv.status_code ==  200
 
-    def test_api_count(self, simple_db_fixture):
-        _, dbinf = simple_db_fixture
+    def test_api_count(self, simple_populated_db):
+        dbinf = simple_populated_db
         rv = self.c.get(url_for('apiv0.get_count'))
         rd = json.loads(rv.data)
         # print rd

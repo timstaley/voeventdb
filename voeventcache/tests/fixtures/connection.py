@@ -52,7 +52,7 @@ def empty_db_connection(request):
 
 
 @pytest.yield_fixture
-def empty_db_session(empty_db_connection):
+def fixture_db_session(empty_db_connection):
     """
     Provide a Session connected to the empty database.
 
@@ -65,8 +65,8 @@ def empty_db_session(empty_db_connection):
     nested_transaction.rollback()
 
 class SimpleDbFixture:
-    def __init__(self, empty_db_session):
-        s = empty_db_session
+    def __init__(self, fixture_db_session):
+        s = fixture_db_session
         packets = fake.heartbeat_packets()
         self.insert_packets = packets[:-1]
         self.insert_packets_dumps = [vp.dumps(v) for v in self.insert_packets]
@@ -79,7 +79,7 @@ class SimpleDbFixture:
         self.absent_ivorn = self.remaining_packet.attrib['ivorn']
 
 @pytest.fixture
-def simple_db_fixture(empty_db_session):
-    s = empty_db_session
-    input_info = SimpleDbFixture(s)
-    return s, input_info
+def simple_populated_db(fixture_db_session):
+    s = fixture_db_session
+    packet_info = SimpleDbFixture(s)
+    return packet_info
