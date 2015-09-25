@@ -29,4 +29,4 @@ def test_single_voevent(empty_db_session, flask_test_client):
     assert data['num_results'] == 1
     assert data['num_results'] == len(rows)
     assert rows[0]['ivorn'] == swift_bat_grb_pos_v2_etree.attrib['ivorn']
-    print rows[0]
+    # print rows[0]

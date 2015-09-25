@@ -1,11 +1,9 @@
 from __future__ import absolute_import
 from sqlalchemy.exc import IntegrityError
 import iso8601
-import voeventparse as vp
 from voeventcache.database.models import Voevent
 from voeventcache.database.convenience import ivorn_present
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
-from voeventcache.tests.fixtures import fake
 
 import pytest
 
@@ -51,69 +49,51 @@ class TestBasicInsertsAndQueries:
     Basic sanity checks. Serve as SQLAlchemy examples as much as anything.
     """
 
-    @pytest.fixture(autouse=True)
-    def insert_several_voevents(self, empty_db_session):
-        """Insert a few VOEvents"""
-        s = empty_db_session
-        packets = fake.heartbeat_packets()
-        self.insert_packets = packets[:-1]
-        self.insert_packets_dumps = [vp.dumps(v) for v in self.insert_packets]
-        self.remaining_packet = packets[-1]
-        # Insert all but the last packet, this gives us a useful counter-example
-        s.add_all(
-            (Voevent.from_etree(p) for p in self.insert_packets))
-        self.n_inserts = len(self.insert_packets)
-        self.inserted_ivorn = self.insert_packets[0].attrib['ivorn']
-        self.absent_ivorn = self.remaining_packet.attrib['ivorn']
-
-        # for r in s.query(Voevent).all():
-        #     print r
-
-    def test_ivorns(self, empty_db_session):
-        s = empty_db_session
+    def test_ivorns(self, simple_db_fixture):
+        s, dbinf = simple_db_fixture
         inserted = s.query(Voevent).all()
-        assert len(inserted) == len(self.insert_packets)
-        pkt_ivorns = [p.attrib['ivorn'] for p in self.insert_packets]
+        assert len(inserted) == len(dbinf.insert_packets)
+        pkt_ivorns = [p.attrib['ivorn'] for p in dbinf.insert_packets]
         inserted_ivorns = [v.ivorn for v in inserted]
         assert pkt_ivorns == inserted_ivorns
 
         # Cross-match against a known-inserted IVORN
         assert 1 == s.query(Voevent).filter(
-            Voevent.ivorn == self.inserted_ivorn).count()
+            Voevent.ivorn == dbinf.inserted_ivorns[0]).count()
 
         # And against a known-absent IVORN
         assert 0 == s.query(Voevent).filter(
-            Voevent.ivorn == self.absent_ivorn).count()
+            Voevent.ivorn == dbinf.absent_ivorn).count()
 
         # Test 'IVORN.startswith(prefix)' equivalent
-        assert self.n_inserts == s.query(Voevent.ivorn).filter(
+        assert dbinf.n_inserts == s.query(Voevent.ivorn).filter(
             Voevent.ivorn.like('ivo://voevent.organization.tld/TEST%')).count()
 
         # Test 'substr in IVORN' equivalent
-        assert self.n_inserts == s.query(Voevent.ivorn).filter(
+        assert dbinf.n_inserts == s.query(Voevent.ivorn).filter(
             Voevent.ivorn.like('%voevent.organization.tld/TEST%')).count()
 
-    def test_convenience_funcs(self, empty_db_session):
-        s = empty_db_session
-        assert ivorn_present(s, self.inserted_ivorn) == True
-        assert ivorn_present(s, self.absent_ivorn) == False
+    def test_convenience_funcs(self, simple_db_fixture):
+        s, dbinf = simple_db_fixture
+        assert ivorn_present(s, dbinf.inserted_ivorns[0]) == True
+        assert ivorn_present(s, dbinf.absent_ivorn) == False
 
-    def test_xml_round_trip(self, empty_db_session):
+    def test_xml_round_trip(self, simple_db_fixture):
         "Sanity check that XML is not corrupted or prefixed or re-encoded etc"
-        s = empty_db_session
+        s, dbinf = simple_db_fixture
         xml_pkts = [r.xml for r in s.query(Voevent.xml).all()]
-        assert xml_pkts == self.insert_packets_dumps
+        assert xml_pkts == dbinf.insert_packets_dumps
 
         xml_single = s.query(Voevent.xml).filter(
-            Voevent.ivorn == self.insert_packets[0].attrib['ivorn']
+            Voevent.ivorn == dbinf.insert_packets[0].attrib['ivorn']
         ).scalar()
-        assert xml_single == self.insert_packets_dumps[0]
+        assert xml_single == dbinf.insert_packets_dumps[0]
 
-    def test_datetime_comparison(self, empty_db_session):
-        s = empty_db_session
+    def test_datetime_comparison(self, simple_db_fixture):
+        s, dbinf = simple_db_fixture
         pkt_index = 5
         pkt_timestamp = iso8601.parse_date(
-            self.insert_packets[pkt_index].Who.Date.text)
+            dbinf.insert_packets[pkt_index].Who.Date.text)
         pkts_before = s.query(Voevent).filter(
             Voevent.author_datetime < pkt_timestamp
         ).count()

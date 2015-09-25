@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from sqlalchemy import create_engine
+import voeventparse as vp
 from voeventcache.tests.config import admin_db_url, testdb_empty_url
 from voeventcache.database import db_utils, db_session
-from voeventcache.database.models import Base
+from voeventcache.database.models import Base, Voevent
+import voeventcache.tests.fixtures.fake as fake
 
 import pytest
 
@@ -61,3 +63,23 @@ def empty_db_session(empty_db_connection):
     yield db_session
     db_session.remove()
     nested_transaction.rollback()
+
+class SimpleDbFixture:
+    def __init__(self, empty_db_session):
+        s = empty_db_session
+        packets = fake.heartbeat_packets()
+        self.insert_packets = packets[:-1]
+        self.insert_packets_dumps = [vp.dumps(v) for v in self.insert_packets]
+        self.remaining_packet = packets[-1]
+        # Insert all but the last packet, this gives us a useful counter-example
+        s.add_all(
+            (Voevent.from_etree(p) for p in self.insert_packets))
+        self.n_inserts = len(self.insert_packets)
+        self.inserted_ivorns = [ p.attrib['ivorn'] for p in self.insert_packets]
+        self.absent_ivorn = self.remaining_packet.attrib['ivorn']
+
+@pytest.fixture
+def simple_db_fixture(empty_db_session):
+    s = empty_db_session
+    input_info = SimpleDbFixture(s)
+    return s, input_info
