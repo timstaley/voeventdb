@@ -8,15 +8,18 @@ from voeventcache.database.models import Voevent
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/dev')
 
+# class QueryKeys:
+# """Used as a namespace for query-string definitions"""
+
 
 def filter_query(q, args):
     if 'prefix' in args:
         q = q.filter(
             Voevent.ivorn.like('{}%'.format(args['prefix'])))
-    if 'authored_from' in args:
-        authored_from = iso8601.parse_date(args['authored_from'])
+    if 'authored_since' in args:
+        authored_since = iso8601.parse_date(args['authored_since'])
         q = q.filter(
-            Voevent.author_datetime >= authored_from)
+            Voevent.author_datetime >= authored_since)
     if 'authored_until' in args:
         authored_until = iso8601.parse_date(args['authored_until'])
         q = q.filter(
