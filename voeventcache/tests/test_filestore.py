@@ -36,7 +36,7 @@ def test_tarball_round_trip(named_temporary_file):
         fname
     )
 
-    loaded_voevents = list(filestore.tarfile_voevent_generator(fname))
+    loaded_voevents = [ vp.loads(s.xml) for s in filestore.tarfile_xml_generator(fname)]
     def to_strings(voeventlist):
         return [vp.dumps(v) for v in voeventlist]
     def to_ivorn(voeventlist):

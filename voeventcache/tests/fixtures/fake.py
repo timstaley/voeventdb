@@ -3,9 +3,12 @@ from voeventcache.tests.fixtures.testpacket_id import testpacket_identity
 from datetime import datetime, timedelta
 import voeventparse as vp
 
-def heartbeat_packets(start=datetime(2015, 1, 1),
+default_start_dt = datetime(2015, 1, 1)
+
+def heartbeat_packets(start=default_start_dt,
                       interval=timedelta(minutes=15),
-                      n_packets=24):
+                      n_packets=24,
+                      role=vp.definitions.roles.test):
     """
     Create Voevents with varying ivorns and values of ``Who.Date``.
 
@@ -19,7 +22,8 @@ def heartbeat_packets(start=datetime(2015, 1, 1),
     packets = []
     for ts in packetgen.timerange(start,start+n_packets*interval,interval):
         packets.append(packetgen.create_test_packet(testpacket_identity,
-                                                    author_date=ts))
+                                                    author_date=ts,
+                                                    role=role))
 
 
     # NB Whitespacing of loaded (parsed) vs custom-built VOEvents is different:

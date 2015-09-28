@@ -37,9 +37,9 @@ def create_skeleton_voevent(id, stream, role, author_date):
     return v
 
 
-def create_test_packet(id, author_date):
+def create_test_packet(id, author_date, role):
     v = create_skeleton_voevent(id, stream='TEST',
-                                role=vp.definitions.roles.test,
+                                role=role,
                                 author_date=author_date)
     return v
 

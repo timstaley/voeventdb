@@ -47,12 +47,16 @@ class Voevent(Base):
         doc="Records when the packet was loaded into the database"
     )
     ivorn = Column(sql.String, nullable=False, unique=True, index=True)
+    stream = Column(sql.String, index=True)
     role = Column(sql.Enum(vp.definitions.roles.observation,
                            vp.definitions.roles.prediction,
                            vp.definitions.roles.utility,
                            vp.definitions.roles.test,
-                           name="roles_enum"
-                           ))
+                           name="roles_enum",
+                           ),
+                  index=True
+                  )
+    version = Column(sql.String)
     # Who
     author_ivorn = Column(sql.String)
     author_datetime = Column(sql.DateTime(timezone=True))
@@ -65,8 +69,14 @@ class Voevent(Base):
         """
         Init a Voevent row from an LXML etree loaded with voevent-parse
         """
-        row = Voevent(ivorn=root.attrib['ivorn'],
+        ivorn = root.attrib['ivorn']
+        # Stream- Everything except before the '#' separator,
+        # with the prefix 'ivo://' removed:
+        stream = ivorn.split('#')[0][6:]
+        row = Voevent(ivorn=ivorn,
                       role=root.attrib['role'],
+                      version=root.attrib['version'],
+                      stream=stream,
                       xml=vp.dumps(root),
                       received=received,
                       )

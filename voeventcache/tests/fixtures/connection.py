@@ -5,7 +5,7 @@ from voeventcache.tests.config import admin_db_url, testdb_empty_url
 from voeventcache.database import db_utils, db_session
 from voeventcache.database.models import Base, Voevent
 import voeventcache.tests.fixtures.fake as fake
-
+from datetime import timedelta
 import pytest
 
 
@@ -68,8 +68,12 @@ class SimpleDbFixture:
     def __init__(self, fixture_db_session):
         s = fixture_db_session
         packets = fake.heartbeat_packets()
+        packets.extend(fake.heartbeat_packets(
+                        start= fake.default_start_dt + timedelta(hours=24),
+                        role=vp.definitions.roles.utility))
         self.insert_packets = packets[:-1]
         self.insert_packets_dumps = [vp.dumps(v) for v in self.insert_packets]
+        self.streams = [v.attrib['ivorn'].split('#')[0][6:] for v in self.insert_packets]
         self.remaining_packet = packets[-1]
         # Insert all but the last packet, this gives us a useful counter-example
         s.add_all(

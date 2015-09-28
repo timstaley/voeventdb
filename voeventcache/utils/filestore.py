@@ -81,15 +81,8 @@ def tarfile_xml_generator(fname):
         while tarinf is not None:
             if  tarinf.isfile() and tarinf.name[-4:] == '.xml':
                 fbuf = tf.extractfile(tarinf)
-                yield fbuf.read()
+                tarinf.xml = fbuf.read()
+                yield tarinf
             tarinf = tf.next()
     finally:
         tf.close()
-
-def tarfile_voevent_generator(fname):
-    """
-    Like `tarfile_xml_generator`, but loads strings as voevents.
-    """
-    tfgen = tarfile_xml_generator(fname)
-    for s in tfgen:
-        yield voeventparse.loads(s)

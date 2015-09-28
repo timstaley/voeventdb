@@ -3,7 +3,9 @@ from sqlalchemy.exc import IntegrityError
 import iso8601
 from voeventcache.database.models import Voevent
 from voeventcache.database.convenience import ivorn_present, safe_insert_voevent
+import voeventcache.database.convenience as convenience
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
+import voeventcache.database.query as qry
 import copy
 
 import pytest
@@ -92,17 +94,26 @@ class TestBasicInsertsAndQueries:
         s = fixture_db_session
         dbinf = simple_populated_db
         pkt_index = 5
-        pkt_timestamp = iso8601.parse_date(
+        threshold_timestamp = iso8601.parse_date(
             dbinf.insert_packets[pkt_index].Who.Date.text)
-        pkts_before = s.query(Voevent).filter(
-            Voevent.author_datetime < pkt_timestamp
-        ).count()
-        assert pkts_before == pkt_index
+        pkts_before_calc = 0
+        pkts_before_or_same_calc = 0
+        for v in simple_populated_db.insert_packets:
+            whodate = iso8601.parse_date(v.Who.Date.text)
+            if whodate < threshold_timestamp:
+                pkts_before_calc += 1
+            if whodate <= threshold_timestamp:
+                pkts_before_or_same_calc += 1
 
-        pkts_before_or_same = s.query(Voevent).filter(
-            Voevent.author_datetime <= pkt_timestamp
+        pkts_before_db = s.query(Voevent).filter(
+            Voevent.author_datetime < threshold_timestamp
         ).count()
-        assert pkts_before_or_same == pkt_index + 1
+        assert pkts_before_calc == pkts_before_db
+
+        pkts_before_or_same_db = s.query(Voevent).filter(
+            Voevent.author_datetime <= threshold_timestamp
+        ).count()
+        assert pkts_before_or_same_calc == pkts_before_or_same_db
 
 class TestConvenienceFuncs:
     def test_ivorn_present(self, fixture_db_session, simple_populated_db):
@@ -127,3 +138,24 @@ class TestConvenienceFuncs:
         bad_packet.Who.AuthorIVORN='ivo://foo.bar'
         with pytest.raises(ValueError):
             safe_insert_voevent(s, bad_packet)
+
+    def test_stream_count(self, fixture_db_session, simple_populated_db):
+        results = convenience.stream_counts(fixture_db_session).all()
+        assert len(results) == 1
+        r0 = results[0]
+        assert r0.streamid == simple_populated_db.streams[0]
+        assert r0.streamcount == simple_populated_db.n_inserts
+
+    def test_stream_count_with_role(self, fixture_db_session, simple_populated_db):
+        """
+        Assumes fake packets all belong to one stream.
+        """
+        roles_insert = set((v.attrib['role'] for v in simple_populated_db.insert_packets))
+        results = convenience.stream_counts_role_breakdown(fixture_db_session).all()
+        assert len(results) == len(roles_insert)
+        for r in results:
+            role = r.role
+            matching_pkts = [v for v in simple_populated_db.insert_packets
+                             if v.attrib['role']==role ]
+            assert r.streamid == simple_populated_db.streams[0]
+            assert r.streamcount == len(matching_pkts)
