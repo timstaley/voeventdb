@@ -8,16 +8,13 @@ def check_database_exists(db_url):
     engine = sqlalchemy.create_engine(db_url)
     try:
         conn = engine.connect()
-        result = conn.execute("select 1").scalar()
+        conn.execute("select 1").scalar()
         conn.close()
-#         print "Found!"
         return True
     except OperationalError:
-#         print "Exception!"
         return False
     finally:
         engine.dispose()
-#         print "Closed"
 
 def create_database(admin_db_url, new_db_name):
     engine = sqlalchemy.create_engine(admin_db_url)

@@ -2,13 +2,8 @@ import os
 import fnmatch
 import logging
 
-from lxml import etree
-import voeventparse as vp
-from voeventcache.database.models import  Voevent
 
 logger = logging.getLogger(__name__)
-
-
 
 
 def ingest_dir(topdir, session):

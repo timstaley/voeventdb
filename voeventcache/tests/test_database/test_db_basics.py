@@ -2,10 +2,12 @@ from __future__ import absolute_import
 from sqlalchemy.exc import IntegrityError
 import iso8601
 from voeventcache.database.models import Voevent
-from voeventcache.database.convenience import ivorn_present
+from voeventcache.database.convenience import ivorn_present, safe_insert_voevent
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
+import copy
 
 import pytest
+import logging
 
 
 def test_empty_table_present(fixture_db_session):
@@ -74,12 +76,6 @@ class TestBasicInsertsAndQueries:
         assert dbinf.n_inserts == s.query(Voevent.ivorn).filter(
             Voevent.ivorn.like('%voevent.organization.tld/TEST%')).count()
 
-    def test_convenience_funcs(self, fixture_db_session, simple_populated_db):
-        s = fixture_db_session
-        dbinf = simple_populated_db
-        assert ivorn_present(s, dbinf.inserted_ivorns[0]) == True
-        assert ivorn_present(s, dbinf.absent_ivorn) == False
-
     def test_xml_round_trip(self, fixture_db_session, simple_populated_db):
         "Sanity check that XML is not corrupted or prefixed or re-encoded etc"
         s = fixture_db_session
@@ -107,3 +103,27 @@ class TestBasicInsertsAndQueries:
             Voevent.author_datetime <= pkt_timestamp
         ).count()
         assert pkts_before_or_same == pkt_index + 1
+
+class TestConvenienceFuncs:
+    def test_ivorn_present(self, fixture_db_session, simple_populated_db):
+        s = fixture_db_session
+        dbinf = simple_populated_db
+        assert ivorn_present(s, dbinf.inserted_ivorns[0]) == True
+        assert ivorn_present(s, dbinf.absent_ivorn) == False
+
+    def test_safe_insert(self, fixture_db_session, simple_populated_db,
+                         caplog
+                         ):
+
+        s = fixture_db_session
+        dbinf = simple_populated_db
+        nlogs = len(caplog.records())
+        with caplog.atLevel(logging.WARNING):
+            safe_insert_voevent(s, dbinf.insert_packets[0])
+        assert len(caplog.records()) == nlogs + 1
+        assert caplog.records()[-1].levelname == 'WARNING'
+
+        bad_packet = copy.copy(dbinf.insert_packets[0])
+        bad_packet.Who.AuthorIVORN='ivo://foo.bar'
+        with pytest.raises(ValueError):
+            safe_insert_voevent(s, bad_packet)
