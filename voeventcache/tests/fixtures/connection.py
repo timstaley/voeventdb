@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from sqlalchemy import create_engine
 import voeventparse as vp
 from voeventcache.tests.config import admin_db_url, testdb_empty_url
-from voeventcache.database import db_utils, db_session
+from voeventcache.database import db_utils, session_registry, session_factory
 from voeventcache.database.models import Base, Voevent
 import voeventcache.tests.fixtures.fake as fake
 from datetime import timedelta
@@ -59,9 +59,10 @@ def fixture_db_session(empty_db_connection):
     We use nested transactions to return the database to empty after each test.
     """
     nested_transaction = empty_db_connection.begin_nested()
-    db_session.configure(bind=empty_db_connection)
-    yield db_session
-    db_session.remove()
+    session_factory.configure(bind=empty_db_connection)
+    session = session_registry()
+    yield session
+    session_registry.remove()
     nested_transaction.rollback()
 
 class SimpleDbFixture:
@@ -73,7 +74,11 @@ class SimpleDbFixture:
                         role=vp.definitions.roles.utility))
         self.insert_packets = packets[:-1]
         self.insert_packets_dumps = [vp.dumps(v) for v in self.insert_packets]
-        self.streams = [v.attrib['ivorn'].split('#')[0][6:] for v in self.insert_packets]
+        self.streams = [v.attrib['ivorn'].split('#')[0][6:]
+                        for v in self.insert_packets]
+        self.stream_set = list(set(self.streams))
+        self.roles= [v.attrib['role'] for v in self.insert_packets]
+        self.role_set = list(set(self.roles))
         self.remaining_packet = packets[-1]
         # Insert all but the last packet, this gives us a useful counter-example
         s.add_all(
@@ -81,6 +86,7 @@ class SimpleDbFixture:
         self.n_inserts = len(self.insert_packets)
         self.inserted_ivorns = [ p.attrib['ivorn'] for p in self.insert_packets]
         self.absent_ivorn = self.remaining_packet.attrib['ivorn']
+
 
 @pytest.fixture
 def simple_populated_db(fixture_db_session):

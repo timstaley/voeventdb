@@ -1,8 +1,7 @@
 from __future__ import absolute_import
-
-import voeventparse as vp
 from voeventcache.database.models import Voevent
 from sqlalchemy import func
+import voeventcache.database.query as query
 
 import logging
 
@@ -38,25 +37,11 @@ def safe_insert_voevent(session, etree):
                         'XML matches OK.')
 
 
-def stream_counts(session):
-    s = session
-    stream_counts_qry = s.query(
-            Voevent.stream.distinct().label('streamid'),
-            (func.count(Voevent.ivorn)).label('streamcount'),
-        ).select_from(Voevent).\
-        group_by(Voevent.stream).\
-        order_by('streamcount')
-    return stream_counts_qry
 
-
-def stream_counts_role_breakdown(session):
-    s = session
-    stream_counts_role_breakdown_qry = s.query(
-            Voevent.stream.distinct().label('streamid'),
-            Voevent.role,
-            (func.count(Voevent.ivorn)).label('streamcount'),
-        ).select_from(Voevent).\
-            group_by(Voevent.stream, Voevent.role).\
-        order_by(Voevent.stream, Voevent.role)
-    return stream_counts_role_breakdown_qry
-
+def to_nested_dict(bi_grouped_rowset):
+    nested = {}
+    for r in bi_grouped_rowset:
+        if r[0] not in nested:
+            nested[r[0]]={}
+        nested[r[0]][r[1]] = r[2]
+    return nested

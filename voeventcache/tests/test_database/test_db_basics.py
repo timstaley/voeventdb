@@ -4,8 +4,8 @@ import iso8601
 from voeventcache.database.models import Voevent
 from voeventcache.database.convenience import ivorn_present, safe_insert_voevent
 import voeventcache.database.convenience as convenience
+import voeventcache.database.query as query
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
-import voeventcache.database.query as qry
 import copy
 
 import pytest
@@ -140,22 +140,22 @@ class TestConvenienceFuncs:
             safe_insert_voevent(s, bad_packet)
 
     def test_stream_count(self, fixture_db_session, simple_populated_db):
-        results = convenience.stream_counts(fixture_db_session).all()
-        assert len(results) == 1
-        r0 = results[0]
-        assert r0.streamid == simple_populated_db.streams[0]
-        assert r0.streamcount == simple_populated_db.n_inserts
+        sc = dict(query.stream_counts_q(fixture_db_session).all())
+        assert len(sc) == 1
+
+        assert sc == { simple_populated_db.streams[0] :
+                           simple_populated_db.n_inserts}
 
     def test_stream_count_with_role(self, fixture_db_session, simple_populated_db):
         """
         Assumes fake packets all belong to one stream.
         """
         roles_insert = set((v.attrib['role'] for v in simple_populated_db.insert_packets))
-        results = convenience.stream_counts_role_breakdown(fixture_db_session).all()
-        assert len(results) == len(roles_insert)
-        for r in results:
-            role = r.role
-            matching_pkts = [v for v in simple_populated_db.insert_packets
-                             if v.attrib['role']==role ]
-            assert r.streamid == simple_populated_db.streams[0]
-            assert r.streamcount == len(matching_pkts)
+        q = query.stream_counts_role_breakdown_q(fixture_db_session)
+        rb = convenience.to_nested_dict(q.all())
+        assert len(rb) == len(simple_populated_db.stream_set)
+        # Currently assume the simple testdb uses only one stream throughout:
+        assert len(simple_populated_db.stream_set)==1
+        # Which means we only need to look at the first value:
+        stream_rolecounts = rb.values()[0]
+        assert len(stream_rolecounts) == len (simple_populated_db.role_set)

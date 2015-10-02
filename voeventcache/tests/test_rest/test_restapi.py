@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import pytest
-from voeventcache.restapi.custom import apiv0
+from voeventcache.restapi.v0 import apiv0
 import json
 from flask import url_for, request
 import iso8601
@@ -20,7 +20,7 @@ class TestWithEmptyDatabase:
         assert rv.status_code == 200
 
     def test_api_count(self):
-        rv = self.c.get(url_for('apiv0.get_count'))
+        rv = self.c.get(url_for('apiv0.count_matching'))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
         assert rd['count'] == 0
@@ -38,10 +38,12 @@ class TestWithSimpleDatabase:
     def test_api_root(self):
         rv = self.c.get(apiv0.url_prefix + '/')
         assert rv.status_code == 200
+        print rv.data
+
 
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
-        rv = self.c.get(url_for('apiv0.get_count'))
+        rv = self.c.get(url_for('apiv0.count_matching'))
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
@@ -55,7 +57,7 @@ class TestWithSimpleDatabase:
         pkt = simple_populated_db.insert_packets[pkt_index]
         authored_until_dt = pkt.Who.Date
 
-        qry_url = url_for('apiv0.get_count',
+        qry_url = url_for('apiv0.count_matching',
                           authored_until=authored_until_dt)
         with self.c as c:
             rv = self.c.get(qry_url)
