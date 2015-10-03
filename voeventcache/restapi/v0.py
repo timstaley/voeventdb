@@ -8,7 +8,7 @@ import voeventcache.database.convenience as convenience
 import voeventcache.database.query as query
 
 apiv0 = Blueprint('apiv0', __name__,
-                  url_prefix='/v0')
+                  url_prefix='/api/v0')
 
 
 class QueryKeys:
