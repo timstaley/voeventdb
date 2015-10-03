@@ -1,11 +1,12 @@
-# voeventcache
+# voeventcache      [![Build Status](https://travis-ci.org/timstaley/voeventcache.svg?branch=master)](https://travis-ci.org/timstaley/voeventcache)
 
 A database-store and accompanying RESTful query API for archiving and retrieving 
 [VOEvent](http://voevent.readthedocs.org/) packets.
 
-## Setup
+## Postgres Database Setup
 
-Before the unit-tests or database setup will run, we need a postgres 
+Before the unit-tests or database setup will run, we need a 
+[PostgreSQL](http://www.postgresql.org/) 
 installation, and a database login with createdb rights. 
 On a typical Debian system, install postgres with something like:
 
@@ -24,6 +25,9 @@ you need to login and create your user like so:
     postgres=# create user userfoo with superuser;
     postgres=# alter user userfoo with password 'userfoo';
 
+For full details, consult the 
+[postgres docs](http://www.postgresql.org/docs/9.3/interactive/tutorial-createdb.html).
+
 Note the unit-tests assume by default a database username/password which
 are both the same as your login username, but this can be edited in
 the [test config file](voeventcache/tests/config.py).
@@ -37,4 +41,12 @@ A final word on Postgres setup - I recommend setting
     
 in *postgresql.conf*, this ensures that all timestamps are displayed in UTC 
 both when querying the database via the command line, and when returning 
-`datetime` objects via the SQLAlchemy API.
+`datetime` objects via the SQLAlchemy API 
+(full docs [here](http://www.postgresql.org/docs/9.3/static/config-setting.html)).
+
+## Package Installation
+Once all that's out of the way, installation is trivial, simply run
+
+    pip install .[all]
+
+
