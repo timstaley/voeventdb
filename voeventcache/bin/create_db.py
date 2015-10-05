@@ -42,9 +42,8 @@ def main():
     engine = create_engine(dburl)
     Base.metadata.create_all(engine)
     logger.info('Database "{}" created.'.format(dburl.database))
+    return 0
     
-
-
 
 if __name__ == '__main__':
     sys.exit(main())
