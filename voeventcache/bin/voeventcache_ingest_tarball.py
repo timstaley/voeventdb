@@ -22,8 +22,12 @@ def directory_arg(p):
         raise argparse.ArgumentTypeError(msg)
     return p
 
-def database_url(s):
-    return make_url(s)
+def filepath_arg(p):
+    if not os.path.isfile(p):
+        msg = "Cannot find file at {}".format(p)
+        raise argparse.ArgumentTypeError(msg)
+    return p
+
 
 def handle_args():
     """
@@ -33,12 +37,12 @@ def handle_args():
 
     default_database_url = testdb_corpus_url
     parser = argparse.ArgumentParser(prog=os.path.basename(__file__))
-    parser.add_argument('folder_to_process',
+    parser.add_argument('tarfile',
                         nargs='?',
-                        type=directory_arg,
+                        type=filepath_arg,
                         help='Top level folder to scan for XML files')
     parser.add_argument('-d', '--database_url', nargs='?',
-                    type=database_url,
+                    type=make_url,
                     default=str(default_database_url),
                     help='Database url \n'
                     ' (default="{}"'.format(default_database_url))
@@ -46,17 +50,14 @@ def handle_args():
 
 def main():
     args = handle_args()
-    topdir = args.folder_to_process
-    dburl = args.database_url
-    if not db_utils.check_database_exists(dburl):
+    if not db_utils.check_database_exists(args.database_url):
         raise RuntimeError("Database not found")
 
-    session = Session(bind=create_engine(dburl))
-    ingest.ingest_dir(topdir, session)
-    session.commit()
+    session = Session(bind=create_engine(args.database_url))
+    count = ingest.load_from_tarfile(session, args.tarfile)
     session.close()
-
-
+    logger.info("Loaded {} packets into {}".format(count, args.database_url))
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -26,16 +26,22 @@ packages = find_packages()
 print
 print "FOUND PACKAGES: ", packages
 
+scripts = [
+    "voeventcache/bin/voeventcache_createdb.py",
+    "voeventcache/bin/voeventcache_ingest_tarball.py",
+]
+
 setup(
     name="voeventcache",
     version="0.1a0",
-    packages=packages,
-    package_data={'voeventcache':['tests/resources/*.xml']},
     description="Data-store and accompanying RESTful query API for archiving "
                 "and retrieving VOEvent packets.",
     author="Tim Staley",
     author_email="timstaley337@gmail.com",
     url="https://github.com/timstaley/voeventcache",
+    packages=packages,
+    package_data={'voeventcache':['tests/resources/*.xml']},
     install_requires=install_requires,
-    extras_require=extras_require
+    extras_require=extras_require,
+    scripts=scripts
 )
