@@ -50,7 +50,10 @@ def filter_query(q, args):
 
 @apiv0.route('/')
 @apiv0.route('/stream')
-def streamcounts():
+def stream_counts():
+    """
+    Dict mapping stream -> packet counts.
+    """
     q = query.stream_counts_q(db_session)
     q = filter_query(q, request.args)
     return jsonify({
@@ -58,9 +61,13 @@ def streamcounts():
         ResultKeys.query : request.args,
     })
 
+stream_counts.__doc__+="Value key: ``{}``".format(ResultKeys.count)
 
 @apiv0.route('/breakdown')
 def breakdown():
+    """
+    Nested dict mapping stream -> packet counts per-role.
+    """
     q = query.stream_counts_role_breakdown_q(db_session)
     q = filter_query(q, request.args)
     results = convenience.to_nested_dict(q.all())
@@ -70,10 +77,15 @@ def breakdown():
         ResultKeys.count: len(results),
         ResultKeys.query : request.args,
     })
-
+breakdown.__doc__ += """
+    Value key: ``{}``
+""".format(ResultKeys.role_by_stream)
 
 @apiv0.route('/count')
 def count_matching():
+    """
+    Int: Packet count (matching given query).
+    """
     q = db_session.query(Voevent)
     q = filter_query(q, request.args)
     results = {
@@ -84,6 +96,10 @@ def count_matching():
 
 @apiv0.route('/count_by_month')
 def count_matching_by_month():
+    """
+    Dict mapping month -> packet counts.
+    """
+
     q = query.month_counts_q(db_session)
     q = filter_query(q, request.args)
     results = q.all()
@@ -104,6 +120,9 @@ def count_matching_by_month():
 
 @apiv0.route('/ivorn')
 def ivorns_matching():
+    """
+    List of all ivorns matching query conditions.
+    """
     q = db_session.query(Voevent.ivorn)
     q = filter_query(q, request.args)
     ivorns = q.all()
@@ -116,7 +135,10 @@ def ivorns_matching():
 
 
 @apiv0.route('/role')
-def roles():
+def role_counts():
+    """
+    Dict mapping role -> packet counts.
+    """
     q = query.role_counts_q(db_session)
     q = filter_query(q, request.args)
     return jsonify({
@@ -125,9 +147,11 @@ def roles():
     })
 
 
-@apiv0.route('/xml/')
 @apiv0.route('/xml/<path:ivorn>')
 def get_xml(ivorn=None):
+    """
+    Raw xml packet for a given IVORN
+    """
     if not ivorn:
         abort(400)
     xml = db_session.query(Voevent.xml).filter(
