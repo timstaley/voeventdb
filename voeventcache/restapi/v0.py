@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import iso8601
 from flask import Blueprint, jsonify, abort, request
 
+from datetime import datetime
+
 from voeventcache.database import session_registry as db_session
 from voeventcache.database.models import Voevent
 import voeventcache.database.convenience as convenience
@@ -21,6 +23,7 @@ class QueryKeys:
 
 class ResultKeys:
     count = 'count'
+    count_by_month = 'count_by_month'
     ivorn = 'ivorn'
     query = 'query'
     role = 'role'
@@ -78,6 +81,25 @@ def count_matching():
         ResultKeys.query: request.args
     }
     return jsonify(results)
+
+@apiv0.route('/count_by_month')
+def count_matching_by_month():
+    q = query.month_counts_q(db_session)
+    q = filter_query(q, request.args)
+    results = q.all()
+    converted_results = []
+    for r in results:
+        if r.month_id:
+            newrow = (r.month_id.date().isoformat()[:-3], r.month_count)
+        else:
+            newrow = r
+        converted_results.append(newrow)
+
+    return jsonify({
+        ResultKeys.count_by_month: converted_results,
+        ResultKeys.query: request.args
+    })
+
 
 
 @apiv0.route('/ivorn')

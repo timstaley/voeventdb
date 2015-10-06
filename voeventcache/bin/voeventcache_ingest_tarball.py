@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 from voeventcache.database import ingest, db_utils
 from voeventcache.tests.config import testdb_corpus_url
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('iso8601').setLevel(logging.ERROR) #Suppress iso8601 debug log.
 logger = logging.getLogger("vo-ingest")
 
 def directory_arg(p):

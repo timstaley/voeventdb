@@ -5,7 +5,7 @@ Initialize the Flask app.
 from voeventcache.database import session_registry
 from voeventcache.restapi.v0 import apiv0
 from voeventcache.restapi.restlessapi import restless_manager
-from voeventcache.tests.config import testdb_scratch_url
+from voeventcache.tests.config import testdb_scratch_url, testdb_corpus_url
 from sqlalchemy import engine
 from flask import Flask
 
@@ -23,5 +23,5 @@ if __name__ == '__main__':
     """
     Fires up the app in debug mode for development.
     """
-    session_registry.configure(bind=engine.create_engine(testdb_scratch_url))
+    session_registry.configure(bind=engine.create_engine(testdb_corpus_url))
     app.run(debug=True)
