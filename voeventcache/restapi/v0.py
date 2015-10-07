@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import iso8601
-from flask import Blueprint, jsonify, abort, request
-
-from datetime import datetime
+from flask import (
+    Blueprint, jsonify, abort, request, make_response, redirect
+)
+from flask.views import View
 
 from voeventcache.database import session_registry as db_session
 from voeventcache.database.models import Voevent
@@ -11,7 +12,6 @@ import voeventcache.database.query as query
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/v0')
-
 
 class QueryKeys:
     authored_since = 'authored_since'
@@ -23,12 +23,15 @@ class QueryKeys:
 
 class ResultKeys:
     count = 'count'
-    count_by_month = 'count_by_month'
-    ivorn = 'ivorn'
-    query = 'query'
-    role = 'role'
-    role_by_stream = 'role_by_stream'
-    stream = 'stream'
+    endpoint = 'endpoint'
+    querystring = 'querystring'
+    result = 'result'
+    url = 'url'
+    # count_by_month = 'count_by_month'
+    # ivorn = 'ivorn'
+    # role = 'role'
+    # role_by_stream = 'role_by_stream'
+    # stream = 'stream'
 
 
 def filter_query(q, args):
@@ -48,103 +51,128 @@ def filter_query(q, args):
     return q
 
 
+class QueryView(View):
+    def get_query(self):
+        raise NotImplementedError
+
+    def process_query(self, q):
+        raise NotImplementedError
+
+    def dispatch_request(self):
+        q = self.get_query()
+        q = filter_query(q, request.args)
+        result = self.process_query(q)
+        resultdict= {
+            ResultKeys.result: result,
+            ResultKeys.querystring: request.args,
+            ResultKeys.url: request.url,
+            ResultKeys.endpoint: request.url_rule.rule,
+        }
+        return jsonify(resultdict)
+
+
+
 @apiv0.route('/')
-@apiv0.route('/stream')
-def stream_counts():
-    """
-    Dict mapping stream -> packet counts.
-    """
-    q = query.stream_counts_q(db_session)
-    q = filter_query(q, request.args)
-    return jsonify({
-        ResultKeys.stream: dict(q.all()),
-        ResultKeys.query : request.args,
-    })
-
-stream_counts.__doc__+="Value key: ``{}``".format(ResultKeys.count)
-
-@apiv0.route('/breakdown')
-def breakdown():
-    """
-    Nested dict mapping stream -> packet counts per-role.
-    """
-    q = query.stream_counts_role_breakdown_q(db_session)
-    q = filter_query(q, request.args)
-    results = convenience.to_nested_dict(q.all())
-
-    return jsonify({
-        ResultKeys.role_by_stream: results,
-        ResultKeys.count: len(results),
-        ResultKeys.query : request.args,
-    })
-breakdown.__doc__ += """
-    Value key: ``{}``
-""".format(ResultKeys.role_by_stream)
-
-@apiv0.route('/count')
-def count_matching():
-    """
-    Int: Packet count (matching given query).
-    """
-    q = db_session.query(Voevent)
-    q = filter_query(q, request.args)
-    results = {
-        ResultKeys.count: q.count(),
-        ResultKeys.query: request.args
-    }
-    return jsonify(results)
-
-@apiv0.route('/count_by_month')
-def count_matching_by_month():
-    """
-    Dict mapping month -> packet counts.
-    """
-
-    q = query.month_counts_q(db_session)
-    q = filter_query(q, request.args)
-    results = q.all()
-    converted_results = []
-    for r in results:
-        if r.month_id:
-            newrow = (r.month_id.date().isoformat()[:-3], r.month_count)
-        else:
-            newrow = r
-        converted_results.append(newrow)
-
-    return jsonify({
-        ResultKeys.count_by_month: converted_results,
-        ResultKeys.query: request.args
-    })
+def root_redirect():
+    return redirect(request.url_root+'docs', code=302)
 
 
+class StreamCount(QueryView):
+    """
+    Dict: Mapping stream -> packet counts per-stream.
+    """
 
-@apiv0.route('/ivorn')
-def ivorns_matching():
-    """
-    List of all ivorns matching query conditions.
-    """
-    q = db_session.query(Voevent.ivorn)
-    q = filter_query(q, request.args)
-    ivorns = q.all()
-    results = {
-        ResultKeys.ivorn: ivorns,
-        ResultKeys.count: len(ivorns),
-        ResultKeys.query: request.args
-    }
-    return jsonify(results)
+    def get_query(self):
+        return query.stream_counts_q(db_session)
+
+    def process_query(self, q):
+        return dict(q.all())
 
 
-@apiv0.route('/role')
-def role_counts():
+apiv0.add_url_rule('/streamcount', view_func=StreamCount.as_view('streamcount'))
+
+
+class StreamRoleCount(QueryView):
     """
-    Dict mapping role -> packet counts.
+    Nested dict: Mapping stream -> role -> packet counts per-role.
     """
-    q = query.role_counts_q(db_session)
-    q = filter_query(q, request.args)
-    return jsonify({
-        ResultKeys.role: dict(q.all()),
-        ResultKeys.query: request.args
-    })
+
+    def get_query(self):
+        return query.stream_counts_role_breakdown_q(db_session)
+
+    def process_query(self, q):
+        return convenience.to_nested_dict(q.all())
+
+
+apiv0.add_url_rule('/streamrolecount',
+                   view_func=StreamRoleCount.as_view('streamrolecount'))
+
+
+class PacketCount(QueryView):
+    """
+    Int: Number of packets matching querystring.
+
+    Returns total number of packets in database if the querystring is blank.
+    """
+
+    def get_query(self):
+        return db_session.query(Voevent)
+
+    def process_query(self, q):
+        return q.count()
+
+
+apiv0.add_url_rule('/packetcount', view_func=PacketCount.as_view('packetcount'))
+
+
+class PacketCountByMonth(QueryView):
+    """
+    Dict: Mapping month -> packet counts per-month.
+    """
+    def get_query(self):
+        return query.month_counts_q(db_session)
+
+    def process_query(self, q):
+        raw_results = q.all()
+        converted_results = []
+        for r in raw_results:
+            if r.month_id:
+                newrow = (r.month_id.date().isoformat()[:-3], r.month_count)
+            else:
+                newrow = r
+            converted_results.append(newrow)
+        return dict(converted_results)
+
+
+apiv0.add_url_rule('/packetcount_by_month',
+                   view_func=PacketCountByMonth.as_view('packetcount_by_month'))
+
+
+class IvornList(QueryView):
+    """
+    List: All ivorns matching querystring.
+    """
+    def get_query(self):
+        return db_session.query(Voevent.ivorn)
+
+    def process_query(self, q):
+        return q.all()
+
+
+apiv0.add_url_rule('/ivorn', view_func=IvornList.as_view('ivorn'))
+
+
+class RoleCount(QueryView):
+    """
+    Dict: Mapping role -> packet counts per-role.
+    """
+    def get_query(self):
+        return query.role_counts_q(db_session)
+
+    def process_query(self, q):
+        return dict(q.all())
+
+apiv0.add_url_rule('/rolecount', view_func=RoleCount.as_view('rolecount'))
 
 
 @apiv0.route('/xml/<path:ivorn>')
@@ -158,6 +186,8 @@ def get_xml(ivorn=None):
         Voevent.ivorn == ivorn
     ).scalar()
     if xml:
-        return xml
+        r = make_response(xml)
+        r.mimetype='text/xml'
+        return r
     else:
         abort(404)

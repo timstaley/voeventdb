@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 import pytest
 from voeventcache.restapi.v0 import apiv0
+from voeventcache.restapi.v0 import ResultKeys
 import json
 from flask import url_for, request
-import iso8601
 
 @pytest.mark.usefixtures('fixture_db_session')
 class TestWithEmptyDatabase:
@@ -17,13 +17,13 @@ class TestWithEmptyDatabase:
 
     def test_api_root(self):
         rv = self.c.get(apiv0.url_prefix + '/')
-        assert rv.status_code == 200
+        assert rv.status_code == 302
 
     def test_api_count(self):
-        rv = self.c.get(url_for('apiv0.count_matching'))
+        rv = self.c.get(url_for(apiv0.name+'.packetcount'))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
-        assert rd['count'] == 0
+        assert rd[ResultKeys.result] == 0
 
 
 class TestWithSimpleDatabase:
@@ -31,24 +31,14 @@ class TestWithSimpleDatabase:
     def assign_test_client_and_initdb(self, flask_test_client):
         self.c = flask_test_client  # Purely for brevity
 
-    def test_bare_root(self):
-        rv = self.c.get('/')
-        assert rv.status_code == 404
-
-    def test_api_root(self):
-        rv = self.c.get(apiv0.url_prefix + '/')
-        assert rv.status_code == 200
-        print rv.data
-
-
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
-        rv = self.c.get(url_for('apiv0.count_matching'))
+        rv = self.c.get(url_for(apiv0.name+'.packetcount'))
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
-        assert rd['count'] == dbinf.n_inserts
-        assert rd['query'] == dict()
+        assert rd[ResultKeys.result] == dbinf.n_inserts
+        assert rd[ResultKeys.querystring] == dict()
 
     def test_count_w_query(self, simple_populated_db):
         dbinf = simple_populated_db
@@ -57,7 +47,7 @@ class TestWithSimpleDatabase:
         pkt = simple_populated_db.insert_packets[pkt_index]
         authored_until_dt = pkt.Who.Date
 
-        qry_url = url_for('apiv0.count_matching',
+        qry_url = url_for(apiv0.name+'.packetcount',
                           authored_until=authored_until_dt)
         with self.c as c:
             rv = self.c.get(qry_url)
@@ -65,5 +55,5 @@ class TestWithSimpleDatabase:
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
-        assert rd['count'] == pkt_index +1 # date bounds are inclusive
-        assert rd['query'] == dict(authored_until = authored_until_dt)
+        assert rd[ResultKeys.result] == pkt_index +1 # date bounds are inclusive
+        assert rd[ResultKeys.querystring] == dict(authored_until = authored_until_dt)
