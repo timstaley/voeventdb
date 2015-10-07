@@ -5,9 +5,13 @@ from flask import url_for
 from voeventcache.restapi.restlessapi import restless_voevent_url
 from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
 from voeventcache.database.models import Voevent
+import pytest
 
 # Ensure dbsession gets correctly configured to empty db:
 pytestmark = pytest.mark.usefixtures('fixture_db_session')
+
+pytestmark = pytest.mark.skipif(True,
+                    reason="Restless API disabled")
 
 
 def test_empty_database(flask_test_client):

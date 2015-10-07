@@ -288,3 +288,31 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+
+# Ugly hack to fix the endpoint sorting:
+# We overwrite the 'get_routes' function with a subtly altered version
+# This is essentially a copy-paste, but with the ``iter_rules`` call
+# wrapped by a ``sorted``.
+# Written against sphinxcontrib-httpdomain==1.4.0 (as per requirements.txt).
+import sphinxcontrib.autohttp.flask as autodocflask
+
+def get_routes(app, endpoint=None):
+    endpoints = []
+    for rule in sorted(app.url_map.iter_rules(endpoint)):
+        if rule.endpoint not in endpoints:
+            endpoints.append(rule.endpoint)
+    for endpoint in endpoints:
+        methodrules = {}
+        for rule in app.url_map.iter_rules(endpoint):
+            methods = rule.methods.difference(['OPTIONS', 'HEAD'])
+            path = autodocflask.translate_werkzeug_rule(rule.rule)
+            for method in methods:
+                if method in methodrules:
+                    methodrules[method].append(path)
+                else:
+                    methodrules[method] = [path]
+        for method, paths in methodrules.items():
+            yield method, paths, endpoint
+
+autodocflask.get_routes = get_routes

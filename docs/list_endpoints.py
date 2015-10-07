@@ -1,5 +1,5 @@
 from voeventcache.restapi.app import app
-endpoints = [ r.endpoint for r in app.url_map.iter_rules()]
+rules = [ r for r in sorted(app.url_map.iter_rules())]
 
-for ep in endpoints:
-    print ep
+for r in rules:
+    print r.endpoint

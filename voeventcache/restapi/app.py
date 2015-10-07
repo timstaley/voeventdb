@@ -11,7 +11,7 @@ from flask import Flask
 
 app = Flask(__name__)
 app.register_blueprint(apiv0)
-restless_manager.init_app(app, session=session_registry)
+# restless_manager.init_app(app, session=session_registry)
 
 
 @app.teardown_appcontext

@@ -1,1 +1,3 @@
-sphinxcontrib-httpdomain
+# NB! Beware ugly hack in source/conf.py
+# Might need to remove / update it when changing the httpdomain version.
+sphinxcontrib-httpdomain==1.4.0
