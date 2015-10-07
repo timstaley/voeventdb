@@ -13,6 +13,7 @@ import voeventcache.database.query as query
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/v0')
 
+
 class QueryKeys:
     authored_since = 'authored_since'
     authored_until = 'authored_until'
@@ -27,11 +28,6 @@ class ResultKeys:
     querystring = 'querystring'
     result = 'result'
     url = 'url'
-    # count_by_month = 'count_by_month'
-    # ivorn = 'ivorn'
-    # role = 'role'
-    # role_by_stream = 'role_by_stream'
-    # stream = 'stream'
 
 
 def filter_query(q, args):
@@ -62,7 +58,7 @@ class QueryView(View):
         q = self.get_query()
         q = filter_query(q, request.args)
         result = self.process_query(q)
-        resultdict= {
+        resultdict = {
             ResultKeys.result: result,
             ResultKeys.querystring: request.args,
             ResultKeys.url: request.url,
@@ -71,44 +67,12 @@ class QueryView(View):
         return jsonify(resultdict)
 
 
-
 @apiv0.route('/')
 def root_redirect():
-    return redirect(request.url_root+'docs', code=302)
+    return redirect(request.url_root + 'docs', code=302)
 
 
-class StreamCount(QueryView):
-    """
-    Dict: Mapping stream -> packet counts per-stream.
-    """
-
-    def get_query(self):
-        return query.stream_counts_q(db_session)
-
-    def process_query(self, q):
-        return dict(q.all())
-
-
-apiv0.add_url_rule('/streamcount', view_func=StreamCount.as_view('streamcount'))
-
-
-class StreamRoleCount(QueryView):
-    """
-    Nested dict: Mapping stream -> role -> packet counts per-role.
-    """
-
-    def get_query(self):
-        return query.stream_counts_role_breakdown_q(db_session)
-
-    def process_query(self, q):
-        return convenience.to_nested_dict(q.all())
-
-
-apiv0.add_url_rule('/streamrolecount',
-                   view_func=StreamRoleCount.as_view('streamrolecount'))
-
-
-class PacketCount(QueryView):
+class Count(QueryView):
     """
     Int: Number of packets matching querystring.
 
@@ -122,13 +86,29 @@ class PacketCount(QueryView):
         return q.count()
 
 
-apiv0.add_url_rule('/packetcount', view_func=PacketCount.as_view('packetcount'))
+apiv0.add_url_rule('/count', view_func=Count.as_view('count'))
 
 
-class PacketCountByMonth(QueryView):
+class IvornList(QueryView):
+    """
+    List: All ivorns matching querystring.
+    """
+
+    def get_query(self):
+        return db_session.query(Voevent.ivorn)
+
+    def process_query(self, q):
+        return q.all()
+
+
+apiv0.add_url_rule('/ivorn', view_func=IvornList.as_view('ivorn'))
+
+
+class MonthCount(QueryView):
     """
     Dict: Mapping month -> packet counts per-month.
     """
+
     def get_query(self):
         return query.month_counts_q(db_session)
 
@@ -144,35 +124,55 @@ class PacketCountByMonth(QueryView):
         return dict(converted_results)
 
 
-apiv0.add_url_rule('/packetcount_by_month',
-                   view_func=PacketCountByMonth.as_view('packetcount_by_month'))
-
-
-class IvornList(QueryView):
-    """
-    List: All ivorns matching querystring.
-    """
-    def get_query(self):
-        return db_session.query(Voevent.ivorn)
-
-    def process_query(self, q):
-        return q.all()
-
-
-apiv0.add_url_rule('/ivorn', view_func=IvornList.as_view('ivorn'))
+apiv0.add_url_rule('/month_count',
+                   view_func=MonthCount.as_view('month_count'))
 
 
 class RoleCount(QueryView):
     """
     Dict: Mapping role -> packet counts per-role.
     """
+
     def get_query(self):
         return query.role_counts_q(db_session)
 
     def process_query(self, q):
         return dict(q.all())
 
-apiv0.add_url_rule('/rolecount', view_func=RoleCount.as_view('rolecount'))
+
+apiv0.add_url_rule('/role_count', view_func=RoleCount.as_view('role_count'))
+
+
+class StreamCount(QueryView):
+    """
+    Dict: Mapping stream -> packet counts per-stream.
+    """
+
+    def get_query(self):
+        return query.stream_counts_q(db_session)
+
+    def process_query(self, q):
+        return dict(q.all())
+
+
+apiv0.add_url_rule('/stream_count',
+                   view_func=StreamCount.as_view('stream_count'))
+
+
+class StreamRoleCount(QueryView):
+    """
+    Nested dict: Mapping stream -> role -> packet counts per-role.
+    """
+
+    def get_query(self):
+        return query.stream_counts_role_breakdown_q(db_session)
+
+    def process_query(self, q):
+        return convenience.to_nested_dict(q.all())
+
+
+apiv0.add_url_rule('/stream_role_count',
+                   view_func=StreamRoleCount.as_view('stream_role_count'))
 
 
 @apiv0.route('/xml/<path:ivorn>')
@@ -187,7 +187,7 @@ def get_xml(ivorn=None):
     ).scalar()
     if xml:
         r = make_response(xml)
-        r.mimetype='text/xml'
+        r.mimetype = 'text/xml'
         return r
     else:
         abort(404)

@@ -20,7 +20,7 @@ class TestWithEmptyDatabase:
         assert rv.status_code == 302
 
     def test_api_count(self):
-        rv = self.c.get(url_for(apiv0.name+'.packetcount'))
+        rv = self.c.get(url_for(apiv0.name+'.count'))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
         assert rd[ResultKeys.result] == 0
@@ -33,7 +33,7 @@ class TestWithSimpleDatabase:
 
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
-        rv = self.c.get(url_for(apiv0.name+'.packetcount'))
+        rv = self.c.get(url_for(apiv0.name+'.count'))
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
@@ -47,7 +47,7 @@ class TestWithSimpleDatabase:
         pkt = simple_populated_db.insert_packets[pkt_index]
         authored_until_dt = pkt.Who.Date
 
-        qry_url = url_for(apiv0.name+'.packetcount',
+        qry_url = url_for(apiv0.name+'.count',
                           authored_until=authored_until_dt)
         with self.c as c:
             rv = self.c.get(qry_url)
