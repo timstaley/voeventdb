@@ -1,11 +1,16 @@
 from __future__ import absolute_import
 from sqlalchemy.exc import IntegrityError
 import iso8601
-from voeventcache.database.models import Voevent
+from voeventcache.database.models import Voevent, Cite
 from voeventcache.database.convenience import ivorn_present, safe_insert_voevent
 import voeventcache.database.convenience as convenience
 import voeventcache.database.query as query
-from voeventcache.tests.resources import swift_bat_grb_pos_v2_etree
+from voeventcache.tests.resources import (
+    swift_bat_grb_pos_v2_etree,
+    swift_bat_grb_655721,
+    swift_xrt_grb_655721,
+)
+import voeventparse as vp
 import copy
 
 import pytest
@@ -46,6 +51,60 @@ class TestBasicInsert:
             # Should throw, breaks unique IVORN constraint:
             s.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
             s.flush()
+
+
+def test_cite_load_from_etree(fixture_db_session):
+    assert len(Cite.from_etree(swift_bat_grb_655721)) == 0
+    assert len(Cite.from_etree(swift_xrt_grb_655721)) == 1
+    c1 = Cite.from_etree(swift_xrt_grb_655721)[0]
+    assert c1.ref_ivorn == swift_bat_grb_655721.attrib['ivorn']
+    assert c1.cite_type == vp.definitions.cite_types.followup
+
+
+class TestCite:
+    """
+    Check that citations get inserted correctly
+    """
+
+    @pytest.fixture(autouse=True)
+    def insert_voevents(self, fixture_db_session):
+        """Insert two Vovents (GRB, XRT followup) as setup"""
+        s = fixture_db_session
+        assert len(s.query(Voevent).all()) == 0  # sanity check
+        s.add(Voevent.from_etree(swift_bat_grb_655721))
+        s.add(Voevent.from_etree(swift_xrt_grb_655721))
+        s.flush()
+
+    def test_citations_loaded(self, fixture_db_session):
+        s = fixture_db_session
+        # print s.query(Voevent.id, Voevent.ivorn).all()
+        # print s.query(Cite).all()
+        n_total_cites = s.query(Cite).count()
+        assert n_total_cites == 1
+        grb_packet_citations = s.query(Voevent). \
+            filter(Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']). \
+            first().cites
+        xrt_packet_citations = s.query(Voevent). \
+            filter(Voevent.ivorn == swift_xrt_grb_655721.attrib['ivorn']). \
+            first().cites
+
+        assert len(grb_packet_citations) == 0
+        assert len(xrt_packet_citations) == 1
+        c0 = xrt_packet_citations[0]
+        xrt_voevent_id = s.query(Voevent.id).filter(
+            Voevent.ivorn == swift_xrt_grb_655721.attrib['ivorn']
+        ).scalar()
+        assert c0.voevent_id == xrt_voevent_id
+        assert c0.ref_ivorn == swift_bat_grb_655721.attrib['ivorn']
+
+    def test_backref_query(self, fixture_db_session):
+        s = fixture_db_session
+        citations = s.query(Voevent.ivorn).join(Cite).\
+            filter(Cite.ref_ivorn == swift_bat_grb_655721.attrib['ivorn'])\
+            .all()
+        assert len(citations) == 1
+        assert citations[0].ivorn == swift_xrt_grb_655721.attrib['ivorn']
+
 
 
 class TestBasicInsertsAndQueries:
@@ -115,6 +174,7 @@ class TestBasicInsertsAndQueries:
         ).count()
         assert pkts_before_or_same_calc == pkts_before_or_same_db
 
+
 class TestConvenienceFuncs:
     def test_ivorn_present(self, fixture_db_session, simple_populated_db):
         s = fixture_db_session
@@ -125,7 +185,6 @@ class TestConvenienceFuncs:
     def test_safe_insert(self, fixture_db_session, simple_populated_db,
                          caplog
                          ):
-
         s = fixture_db_session
         dbinf = simple_populated_db
         nlogs = len(caplog.records())
@@ -135,7 +194,7 @@ class TestConvenienceFuncs:
         assert caplog.records()[-1].levelname == 'WARNING'
 
         bad_packet = copy.copy(dbinf.insert_packets[0])
-        bad_packet.Who.AuthorIVORN='ivo://foo.bar'
+        bad_packet.Who.AuthorIVORN = 'ivo://foo.bar'
         with pytest.raises(ValueError):
             safe_insert_voevent(s, bad_packet)
 
@@ -143,19 +202,21 @@ class TestConvenienceFuncs:
         sc = dict(query.stream_counts_q(fixture_db_session).all())
         assert len(sc) == 1
 
-        assert sc == { simple_populated_db.streams[0] :
-                           simple_populated_db.n_inserts}
+        assert sc == {simple_populated_db.streams[0]:
+                          simple_populated_db.n_inserts}
 
-    def test_stream_count_with_role(self, fixture_db_session, simple_populated_db):
+    def test_stream_count_with_role(self, fixture_db_session,
+                                    simple_populated_db):
         """
         Assumes fake packets all belong to one stream.
         """
-        roles_insert = set((v.attrib['role'] for v in simple_populated_db.insert_packets))
+        roles_insert = set(
+            (v.attrib['role'] for v in simple_populated_db.insert_packets))
         q = query.stream_counts_role_breakdown_q(fixture_db_session)
         rb = convenience.to_nested_dict(q.all())
         assert len(rb) == len(simple_populated_db.stream_set)
         # Currently assume the simple testdb uses only one stream throughout:
-        assert len(simple_populated_db.stream_set)==1
+        assert len(simple_populated_db.stream_set) == 1
         # Which means we only need to look at the first value:
         stream_rolecounts = rb.values()[0]
-        assert len(stream_rolecounts) == len (simple_populated_db.role_set)
+        assert len(stream_rolecounts) == len(simple_populated_db.role_set)

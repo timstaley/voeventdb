@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import deferred
-from sqlalchemy import Column
+from sqlalchemy.orm import (backref, deferred, relationship,
+                            )
+from sqlalchemy import Column, ForeignKey
 import sqlalchemy as sql
 import voeventparse as vp
 from datetime import datetime
@@ -21,8 +22,16 @@ def _grab_xpath(root, xpath, converter=lambda x: x):
     else:
         return None
 
+class OdictMixin(object):
+    def to_odict(self):
+        """
+        Returns an OrderedDict representation of the SQLalchemy table row.
+        """
+        colnames = [c.name for c in self.__table__.columns]
+        return OrderedDict(((col, getattr(self, col)) for col in colnames))
 
-class Voevent(Base):
+
+class Voevent(Base, OdictMixin):
     """
     Define the core VOEvent table.
 
@@ -33,14 +42,14 @@ class Voevent(Base):
         This helps to make explicit what convention we're using and avoid
         any possible timezone-naive mixups down the line.
 
-        However, if this ever gets used at scale may need to be wary of issues
-        with partitioning really large datasets, cf:
+        However, if this ever gets used at (really large!) scale, then may
+        need to be wary of issues with partitioning really large datasets, cf:
         http://justatheory.com/computers/databases/postgresql/use-timestamptz.html
         http://www.postgresql.org/docs/9.1/static/ddl-partitioning.html
 
     """
     __tablename__ = 'voevent'
-    # Basics: Attributes or associated metadata present for **every** VOEvent:
+    # Basics: Attributes or associated metadata present for almost every VOEvent:
     id = Column(sql.Integer, primary_key=True)
     received = Column(
         sql.DateTime(timezone=True), nullable=False,
@@ -64,6 +73,9 @@ class Voevent(Base):
     # http://docs.sqlalchemy.org/en/latest/orm/loading_columns.html
     xml = deferred(Column(sql.String))
 
+    cites = relationship("Cite", backref=backref('voevent', order_by=id),
+                         cascade="all, delete, delete-orphan")
+
     @staticmethod
     def from_etree(root, received=pytz.UTC.localize(datetime.utcnow())):
         """
@@ -83,27 +95,89 @@ class Voevent(Base):
         row.author_datetime = _grab_xpath(root, 'Who/Date',
                                           converter=iso8601.parse_date)
         row.author_ivorn = _grab_xpath(root, 'Who/AuthorIVORN')
+        row.cites = Cite.from_etree(root)
         return row
 
-    def to_odict(self):
-        """
-        Returns an OrderedDict representation of the Voevent row.
-        """
-        colnames = [c.name for c in self.__table__.columns]
-        return OrderedDict( ((col , getattr(self, col)) for col in colnames))
 
 
     def _reformatted_prettydict(self, valformat=str):
         pd = self.prettydict()
-        return '\n'.join(("{}={}".format(k,valformat(v)) for k,v in pd.iteritems()))
+        return '\n'.join(
+            ("{}={}".format(k, valformat(v)) for k, v in pd.iteritems()))
 
     def __repr__(self):
         od = self.to_odict()
-        content = ',\n'.join(("{}={}".format(k,repr(v)) for k,v in od.iteritems()))
+        content = ',\n'.join(
+            ("{}={}".format(k, repr(v)) for k, v in od.iteritems()))
         return """<Voevent({})>""".format(content)
 
     def __str__(self):
         od = self.to_odict()
         od.pop('xml')
-        content = ',\n    '.join(("{}={}".format(k,str(v)) for k,v in od.iteritems()))
+        content = ',\n    '.join(
+            ("{}={}".format(k, str(v)) for k, v in od.iteritems()))
         return """<Voevent({})>""".format(content)
+
+
+class Cite(Base, OdictMixin):
+    """
+    Record the citations given by each VOEvent.
+
+    Relationship is one Voevent -> Many Cites.
+
+    This is quite inefficient (e.g. in the case that the IVORN is known to the
+    database, and is cited by many Voevents) but necessary, since we may see an
+    IVORN cited which is not present. If this becomes an issue, I can imagine
+    various schemes where e.g. a Voevent is created with just a bare IVORN and
+    no other data if it's cited but not ingested, with a flag-bit set
+    accordingly. Or we could create a separate 'cited IVORNS' table. But
+    probably you ain't gonna need it.
+
+    (P.S. Yes, cite is a valid noun form in addition to verb:
+    http://www.grammarphobia.com/blog/2011/10/cite.html
+    And it's much shorter than 'citation'.)
+
+    Note that technically there's a slight model mismatch here: What we're
+    really modelling are the EventIVORN entries in the Citations section
+    of the VOEvent, which typically share a description between them.
+    This may result in duplicated descriptions. Meh.
+
+    """
+    __tablename__ = 'cite'
+    id = Column(sql.Integer, primary_key=True)
+    voevent_id = Column(sql.Integer, ForeignKey(Voevent.id))
+    ref_ivorn = Column(sql.String, nullable=False, index=True)
+    cite_type = Column(sql.Enum(vp.definitions.cite_types.followup,
+                                vp.definitions.cite_types.retraction,
+                                vp.definitions.cite_types.supersedes,
+                                name="cite_types_enum",
+                                ),
+                       nullable=False
+                       )
+    description = Column(sql.String)
+
+
+    @staticmethod
+    def from_etree(root):
+        """
+        Load up the citations, if present, for initializing with the Voevent.
+        """
+        cite_list = []
+        citations = root.xpath('Citations/EventIVORN')
+        if citations:
+            description = root.xpath('Citations/Description')
+            if description:
+                description = description[0]
+            for entry in root.Citations.EventIVORN:
+                cite_list.append(
+                    Cite(ref_ivorn=entry.text,
+                         cite_type=entry.attrib['cite'],
+                         description=description.text)
+                )
+        return cite_list
+
+    def __repr__(self):
+        od = self.to_odict()
+        content = ',\n'.join(
+            ("{}={}".format(k, repr(v)) for k, v in od.iteritems()))
+        return """<Cite({})>""".format(content)
