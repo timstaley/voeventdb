@@ -36,7 +36,7 @@ def page_not_found(abort_error):
 
 if __name__ == '__main__':
     """
-    Fires up the app in debug mode for development.
+    Run the app in debug mode for development.
     """
     session_registry.configure(bind=engine.create_engine(testdb_corpus_url))
 
