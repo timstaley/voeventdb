@@ -8,6 +8,8 @@ from datetime import datetime
 import iso8601
 import pytz
 from collections import OrderedDict
+import logging
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -95,6 +97,7 @@ class Voevent(Base, OdictMixin):
         row.author_datetime = _grab_xpath(root, 'Who/Date',
                                           converter=iso8601.parse_date)
         row.author_ivorn = _grab_xpath(root, 'Who/AuthorIVORN')
+
         row.cites = Cite.from_etree(root)
         return row
 
@@ -167,13 +170,20 @@ class Cite(Base, OdictMixin):
         if citations:
             description = root.xpath('Citations/Description')
             if description:
-                description = description[0]
+                description_text = description[0].text
+            else:
+                description_text = None
             for entry in root.Citations.EventIVORN:
-                cite_list.append(
-                    Cite(ref_ivorn=entry.text,
-                         cite_type=entry.attrib['cite'],
-                         description=description.text)
-                )
+                if entry.text:
+                    cite_list.append(
+                        Cite(ref_ivorn=entry.text,
+                             cite_type=entry.attrib['cite'],
+                             description=description_text)
+                    )
+                else:
+                    logger.info(
+                        'Ignoring empty citation in {}'.format(
+                            root.attrib['ivorn']))
         return cite_list
 
     def __repr__(self):

@@ -56,4 +56,4 @@ class TestWithSimpleDatabase:
         # print rd
         assert rv.status_code == 200
         assert rd[ResultKeys.result] == pkt_index +1 # date bounds are inclusive
-        assert rd[ResultKeys.querystring] == dict(authored_until = authored_until_dt)
+        assert rd[ResultKeys.querystring] == dict(authored_until = [authored_until_dt,])

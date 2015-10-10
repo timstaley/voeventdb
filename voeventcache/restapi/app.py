@@ -23,13 +23,14 @@ def shutdown_session(exception=None):
 
 
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(abort_error):
     rules = [r for r in sorted(app.url_map.iter_rules())
              if r.endpoint.startswith('apiv0')]
     docs_url = app.config.get('DOCS_URL', 'http://' + request.host + '/docs')
     return render_template('404.html',
                            rules=rules,
-                           docs_url=docs_url
+                           docs_url=docs_url,
+                           error=abort_error
                            ), 404
 
 

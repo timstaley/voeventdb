@@ -2,6 +2,15 @@ from __future__ import absolute_import
 from voeventcache.database.models import Voevent
 from sqlalchemy import func
 
+def authored_month_counts_q(session):
+    s = session
+    month_counts_qry = s.query(
+        func.date_trunc('month', Voevent.author_datetime).distinct().label(
+            'month_id'),
+        (func.count(Voevent.ivorn)).label('month_count'),
+    ).select_from(Voevent).group_by('month_id')
+    return month_counts_qry
+
 
 def stream_counts_q(session):
     s = session
@@ -35,11 +44,4 @@ def stream_counts_role_breakdown_q(session):
     return stream_counts_role_breakdown_qry
 
 
-def month_counts_q(session):
-    s = session
-    month_counts_qry = s.query(
-        func.date_trunc('month', Voevent.author_datetime).distinct().label(
-            'month_id'),
-        (func.count(Voevent.ivorn)).label('month_count'),
-    ).select_from(Voevent).group_by('month_id')
-    return month_counts_qry
+
