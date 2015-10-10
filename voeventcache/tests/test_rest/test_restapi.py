@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import pytest
 from voeventcache.restapi.v0 import apiv0
 from voeventcache.restapi.v0 import ResultKeys
+from voeventcache.restapi.v0.filter_base import list_querystring_keys, filter_registry
 import json
 from flask import url_for, request
 
@@ -42,7 +43,6 @@ class TestWithSimpleDatabase:
 
     def test_count_w_query(self, simple_populated_db):
         dbinf = simple_populated_db
-
         pkt_index = 6
         pkt = simple_populated_db.insert_packets[pkt_index]
         authored_until_dt = pkt.Who.Date

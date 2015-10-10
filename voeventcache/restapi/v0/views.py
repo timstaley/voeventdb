@@ -1,48 +1,21 @@
 from __future__ import absolute_import
-import iso8601
+
 from flask import (
     Blueprint, jsonify, abort, request, make_response,
     current_app
 )
 from flask.views import View
-from flask import url_for
-
-from sqlalchemy import or_, and_
 
 from voeventcache.database import session_registry as db_session
 from voeventcache.database.models import Voevent
 import voeventcache.database.convenience as convenience
 import voeventcache.database.query as query
+from voeventcache.restapi.v0.filters import apply_filters
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
 
 default_query_limit = 100
-
-
-class QueryKeys:
-    authored_since = 'authored_since'
-    """
-    Return only VOEvents with a ``Who.Date`` entry dated after the given time.
-
-    Date-time strings passed should be in a format parseable by the
-    ``is08601.parse_date`` function e.g.::
-
-        authored_since=2015-10-09T21:34:19
-
-    or::
-
-        authored_since=2015-10-09
-
-    """
-    authored_until = 'authored_until'
-    contains = 'contains'
-    limit = 'limit'
-    offset = 'offset'
-    prefix = 'prefix'
-    role = 'role'
-    stream = 'stream'
-
 
 class ResultKeys:
     count = 'count'
@@ -51,36 +24,6 @@ class ResultKeys:
     querystring = 'querystring'
     result = 'result'
     url = 'url'
-
-
-def filter_query(q, args):
-    keys = QueryKeys
-    if keys.authored_since in args:
-        authored_since = iso8601.parse_date(args[keys.authored_since])
-        q = q.filter(Voevent.author_datetime >= authored_since)
-    if keys.authored_until in args:
-        authored_until = iso8601.parse_date(args[keys.authored_until])
-        q = q.filter(Voevent.author_datetime <= authored_until)
-    if keys.contains in args:
-        q = q.filter(
-            and_(
-                Voevent.ivorn.like('%{}%'.format(substr))
-                for substr in args.getlist(keys.contains)
-            )
-        )
-    if keys.prefix in args:
-        q = q.filter(
-            or_(
-                Voevent.ivorn.like('{}%'.format(pref))
-                for pref in args.getlist(keys.prefix)
-            )
-        )
-    if keys.role in args:
-        q = q.filter(Voevent.role == args[keys.role])
-    if keys.stream in args:
-        q = q.filter(Voevent.stream == args[keys.stream])
-    return q
-
 
 def make_response_dict(result):
         resultdict = {
@@ -100,7 +43,7 @@ class QueryView(View):
 
     def dispatch_request(self):
         q = self.get_query()
-        q = filter_query(q, request.args)
+        q = apply_filters(q, request.args)
         result = self.process_query(q)
         return jsonify(make_response_dict(result))
 
@@ -110,14 +53,14 @@ class ListQueryView(View):
         raise NotImplementedError
 
     def dispatch_request(self):
-        limit = request.args.get(QueryKeys.limit, None)
+        limit = request.args.get('limit', None)
         if not limit:
             limit = current_app.config.get('DEFAULT_QUERY_LIMIT',
                                            default_query_limit)
         q = self.get_query()
-        q = filter_query(q, request.args)
+        q = apply_filters(q, request.args)
         q = q.limit(limit)
-        q = q.offset(request.args.get(QueryKeys.offset))
+        q = q.offset(request.args.get('offset'))
         result = q.all()
         resultdict = make_response_dict(result)
         # Also return the query limit-value for ListView
