@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import pytest
 from voeventcache.restapi.v0 import apiv0
 from voeventcache.restapi.v0 import ResultKeys
-from voeventcache.restapi.v0.filter_base import list_querystring_keys, filter_registry
+import voeventcache.restapi.v0.views as views
 import json
 from flask import url_for, request
 
@@ -57,3 +57,35 @@ class TestWithSimpleDatabase:
         assert rv.status_code == 200
         assert rd[ResultKeys.result] == pkt_index +1 # date bounds are inclusive
         assert rd[ResultKeys.querystring] == dict(authored_until = [authored_until_dt,])
+
+    def test_consistent_ordering(self, simple_populated_db):
+        """
+        Check that database results are orded consistently.
+
+        This test needs work - I can't get it to fail on a small test-fixture
+        db. Noticed that resultsets were varying when testing against a
+        large corpus database with no ordering applied. That has since
+        been fixed using::
+
+                order_by(Voevent.id)
+
+        but this test is will not fail even without that line.
+        Will leave this here as a sort of 'to do' marker.
+
+        """
+        result_sets = []
+        for _ in range(10):
+            with self.c as c:
+                url = url_for(apiv0.name+'.'+views.IvornList.view_name,
+                                    limit=3,
+                                    contains='TEST')
+                # print "URL", url
+                rv = self.c.get(url)
+                # print "ARGS:", request.args
+            rd = json.loads(rv.data)
+            rows = rd[ResultKeys.result]
+            assert len(rows) == 3
+            result_sets.append(rows)
+        rs0 = result_sets[0]
+        for rs in result_sets:
+            assert rs == rs0

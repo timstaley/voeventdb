@@ -7,6 +7,25 @@ Endpoints
     :blueprints: apiv0
 
 
+Returned content
+----------------
+.. autoclass:: voeventcache.restapi.v0.ResultKeys
+    :members:
+    :undoc-members:
+
+
+List-view controls
+--------------------
+The following query-keys can be used to alter the ordering and slicing of
+results when querying a list-endpoint and returning a large number of entries:
+
+
+.. autoclass:: voeventcache.restapi.v0.PaginationKeys
+    :members:
+    :undoc-members:
+
+
+
 Query filters
 ---------------------------
 These filters can be applied by providing key-value pairs as part of the
