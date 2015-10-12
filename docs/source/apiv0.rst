@@ -1,8 +1,16 @@
 REST API v0 (``apiv0``)
 ===============================
 
+
 Endpoints
 ---------
+The ``apiv0`` endpoints are listed below -
+click through to `/apiv0 <../apiv0/>`_ for hyperlinks.
+Most endpoints return a JSON-encoded dict,
+see `returned content`_ for details.
+The 'Result' values documented below refer to the contents of the ``result``
+entry in the JSON-dict.
+
 .. autoflask:: voeventcache.restapi.app:app
     :blueprints: apiv0
 
@@ -14,8 +22,8 @@ Returned content
     :undoc-members:
 
 
-List-view controls
---------------------
+List-pagination controls
+------------------------
 The following query-keys can be used to alter the ordering and slicing of
 results when querying a list-endpoint and returning a large number of entries:
 

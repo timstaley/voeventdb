@@ -139,7 +139,8 @@ def add_to_apiv0(queryview_class):
 @add_to_apiv0
 class AuthoredMonthCount(QueryView):
     """
-    Dict: Mapping month -> packet counts per-month.
+    Result:
+        Dict: Mapping month -> packet counts per-month.
 
     Here, 'month' refers to the month of the 'authoring' DateTime,
     i.e. the ``Who.Date`` element of the VOEvent. NB, may be None.
@@ -166,7 +167,8 @@ class AuthoredMonthCount(QueryView):
 @add_to_apiv0
 class Count(QueryView):
     """
-    Int: Number of packets matching querystring.
+    Result:
+        Int: Number of packets matching querystring.
 
     Returns total number of packets in database if the querystring is blank.
     """
@@ -182,7 +184,8 @@ class Count(QueryView):
 @add_to_apiv0
 class IvornList(ListQueryView):
     """
-    List: All ivorns matching querystring.
+    Result:
+        List: All ivorns matching querystring.
     """
     view_name = 'ivorn'
 
@@ -193,7 +196,8 @@ class IvornList(ListQueryView):
 @add_to_apiv0
 class RoleCount(QueryView):
     """
-    Dict: Mapping role -> packet counts per-role.
+    Result:
+        Dict: Mapping role -> packet counts per-role.
     """
     view_name = 'role_count'
 
@@ -207,7 +211,8 @@ class RoleCount(QueryView):
 @add_to_apiv0
 class StreamCount(QueryView):
     """
-    Dict: Mapping stream -> packet counts per-stream.
+    Result:
+        Dict: Mapping stream -> packet counts per-stream.
     """
     view_name = 'stream_count'
 
@@ -221,7 +226,8 @@ class StreamCount(QueryView):
 @add_to_apiv0
 class StreamRoleCount(QueryView):
     """
-    Nested dict: Mapping stream -> role -> packet counts per-stream-and-role.
+    Result:
+        Nested dict: Mapping stream -> role -> packet counts per-stream-and-role.
     """
     view_name = 'stream_role_count'
 
@@ -235,7 +241,7 @@ class StreamRoleCount(QueryView):
 @apiv0.route('/xml/<path:ivorn>')
 def get_xml(ivorn=None):
     """
-    Raw xml packet for a given IVORN
+    Returns the XML packet contents stored for a given IVORN.
     """
     if not ivorn:
         abort(400)
