@@ -58,6 +58,14 @@ class TestWithSimpleDatabase:
         assert rd[ResultKeys.result] == pkt_index +1 # date bounds are inclusive
         assert rd[ResultKeys.querystring] == dict(authored_until = [authored_until_dt,])
 
+    def test_ivornlist(self, simple_populated_db):
+        dbinf = simple_populated_db
+        ivorn_list_url = url_for(apiv0.name+'.'+views.IvornList.view_name)
+        rv = self.c.get(ivorn_list_url)
+        rd = json.loads(rv.data)
+        assert rv.status_code == 200
+        assert rd[ResultKeys.result] == dbinf.inserted_ivorns
+
     def test_consistent_ordering(self, simple_populated_db):
         """
         Check that database results are orded consistently.

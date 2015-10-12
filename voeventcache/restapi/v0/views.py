@@ -107,6 +107,12 @@ class ListQueryView(View):
     def get_query(self):
         raise NotImplementedError
 
+    def process_query(self, query):
+        """
+        By default, simply return the first column of rows in the list.
+        """
+        return list(row[0] for row in query)
+
     def dispatch_request(self):
         limit = request.args.get(PaginationKeys.limit, None)
         if not limit:
@@ -117,7 +123,7 @@ class ListQueryView(View):
         q = q.order_by(Voevent.id)
         q = q.limit(limit)
         q = q.offset(request.args.get(PaginationKeys.offset))
-        result = q.all()
+        result = self.process_query(q)
         resultdict = make_response_dict(result)
         # Also return the query limit-value for ListView
         # This is useful if no limit specified in query, so default applies.
