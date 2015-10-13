@@ -259,12 +259,16 @@ def get_xml(ivorn=None):
         r.mimetype = 'text/xml'
         return r
     else:
+        if ivorn is None:
+            ivorn = "(No IVORN supplied!)"
         abort(404,
               """
-              Sorry, IVORN not found.
+              Sorry, IVORN:
+              "{}"
+              not found in the cache.
 
-              Did you remember to
+              If your IVORN has been truncated, it probably needs to be
               <a href="http://meyerweb.com/eric/tools/dencoder/">
-              URL-encode</a> your IVORN?
-              """
+              URL-encoded</a>.
+              """.format(ivorn)
               )
