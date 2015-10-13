@@ -5,8 +5,9 @@ Initialize the Flask app.
 from __future__ import absolute_import
 from voeventcache.database import session_registry
 from voeventcache.restapi.v0 import apiv0
-from voeventcache.restapi.restlessapi import restless_manager
+from voeventcache.restapi.v0.errors import (IvornNotFound,IvornNotSupplied)
 from voeventcache.tests.config import testdb_scratch_url, testdb_corpus_url
+
 from sqlalchemy import engine
 from flask import Flask, render_template, url_for, send_from_directory, request
 
@@ -24,16 +25,23 @@ def shutdown_session(exception=None):
     session_registry.remove()
 
 
+@app.errorhandler(IvornNotFound)
+@app.errorhandler(IvornNotSupplied)
+def ivorn_error(error):
+    return render_template('errorbase.html',
+                           error=error
+                           ), error.code
+
 @app.errorhandler(404)
 def page_not_found(abort_error):
-    rules = [r for r in sorted(app.url_map.iter_rules())
+    apiv0_rules = [r for r in sorted(app.url_map.iter_rules())
              if r.endpoint.startswith('apiv0')]
     docs_url = app.config.get('DOCS_URL', 'http://' + request.host + '/docs')
     return render_template('404.html',
-                           rules=rules,
+                           rules=apiv0_rules,
                            docs_url=docs_url,
                            error=abort_error
-                           ), 404
+                           ), abort_error.code
 
 
 if __name__ == '__main__':

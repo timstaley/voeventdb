@@ -4,12 +4,16 @@ REST API v0 (``apiv0``)
 
 Endpoints
 ---------
-The ``apiv0`` endpoints are listed below -
-click through to `/apiv0 <../apiv0/>`_ for hyperlinks.
-Most endpoints return a JSON-encoded dict,
-see `returned content`_ for details.
-The 'Result' values documented below refer to the contents of the ``result``
-entry in the JSON-dict.
+The ``apiv0`` endpoints are listed below.
+
+Most endpoints return a JSON-encoded dictionary;
+the 'Result' values documented below refer to the contents of the ``result``
+entry in the JSON-dict. See `returned content`_ for details.
+
+.. note::
+
+    Clicking the 'Result' headers below will direct you to the relevant
+    endpoint.
 
 .. autoflask:: voeventcache.restapi.app:app
     :blueprints: apiv0

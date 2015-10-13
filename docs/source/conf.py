@@ -21,7 +21,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+# source_encoding = 'utf-8-sig'
 
 # The master toctree document.
 master_doc = 'index'
@@ -84,9 +84,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'voeventcache', u'voeventcache Documentation',
-   author, 'voeventcache', 'One line description of project.',
-   'Miscellaneous'),
+    (master_doc, 'voeventcache', u'voeventcache Documentation',
+     author, 'voeventcache', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 
@@ -97,6 +97,7 @@ texinfo_documents = [
 # wrapped by a ``sorted``.
 # Written against sphinxcontrib-httpdomain==1.4.0 (as per requirements.txt).
 import sphinxcontrib.autohttp.flask as autodocflask
+
 
 def get_routes(app, endpoint=None):
     endpoints = []
@@ -116,4 +117,38 @@ def get_routes(app, endpoint=None):
         for method, paths in methodrules.items():
             yield method, paths, endpoint
 
+
 autodocflask.get_routes = get_routes
+
+from voeventcache.restapi.app import app
+# OK, let's get ugly!
+# sphinx.contrib.autohttp has no way to hyperlink the endpoint headings.
+# So instead, we add hyperlinks in the docstrings of the APIV0 endpoints:
+apiv0_rules = [r for r in sorted(app.url_map.iter_rules())
+               if r.endpoint.startswith('apiv0')]
+import textwrap
+
+
+def add_hyperlink_to_docstring(rule, app):
+    view_func = app.view_functions[rule.endpoint]
+    rawdoc = textwrap.dedent(view_func.__doc__)
+    view_func.__doc__ = rawdoc.replace('Result:',
+                                       '`Result: <{}>`_'.format(str(rule)))
+
+    # If it's the xml endpoint
+    # (ignore all but the bare endpoint to avoid dupes).
+    if (r.endpoint.split('.')[-1] == 'get_xml' and
+                str(r)[-1] != '>'
+        ):
+        view_func.__doc__ = '\n(`Link to bare url <{}>`_)\n'.format(str(rule)) + rawdoc
+
+
+        # hyperlink_header = """\
+        # \n(`{rule} <{rule}>`_)
+        # """.format(rule=str(rule))
+        # # view_func.__doc__ = hyperlink_header + view_func.__doc__
+        # view_func.__doc__ =  hyperlink_header + rawdoc#+ '\nfoo\n\n'
+
+
+for r in apiv0_rules:
+    add_hyperlink_to_docstring(r, app)

@@ -1,32 +1,14 @@
-<!doctype html>
-<head>
+{% extends "errorbase.html" %}
 
-<title>404: voeventcache - Page not found</title>
+{% block extracontent %}
+<p>
+    Available REST endpoints are listed below (or try the
+    <a href="{{ docs_url }}">docs</a>?).
 
-<link rel=stylesheet type=text/css
-      href="{{ url_for('static', filename='css/minimalcss/minimal.css') }}">
-</head>
-<div class="container">
-  <h1>404</h1>
-
-    <div class="row">
-    <div class ="col-8">
-        <p>
-                {{ error.description|safe }}
-        </p>
-        <hr>
-        <p>
-            Available REST endpoints are listed below (or try the
-            <a href="{{ docs_url }}">docs</a>?).
-
-        </p>
-        <ul>
-            {% for r in rules %}
-            <li><a href="{{r}}">{{ r }}</a></li>
-            {% endfor %}
-        </ul>
-    </div>
-    </div>
-
-
-</div>
+</p>
+<ul>
+    {% for r in rules %}
+    <li><a href="{{r}}">{{ r }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}

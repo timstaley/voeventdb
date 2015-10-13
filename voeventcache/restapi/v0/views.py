@@ -12,6 +12,9 @@ from voeventcache.database.models import Voevent
 import voeventcache.database.convenience as convenience
 import voeventcache.database.query as query
 from voeventcache.restapi.v0.filters import apply_filters
+from voeventcache.restapi.v0.errors import (
+    IvornNotFound, IvornNotSupplied
+)
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
@@ -41,13 +44,14 @@ class ResultKeys:
     All endpoints (except the XML-request) return a JSON-encoded dictionary.
 
     At the top level, the dictionary will contain some or all of the following
-    keys. These can be accessed in an autocomplete-friendly fashion to
-    aid in building result-handling code,
-    for example::
+    keys:
 
-        from voeventcache.restapi.v0 import ResultKeys as rkeys
+    .. note::
+        The key-strings can be imported and used in autocomplete-friendly
+        fashion, for example::
 
-        print rkeys.querystring
+            from voeventcache.restapi.v0 import ResultKeys as rkeys
+            print rkeys.querystring
     """
     endpoint = 'endpoint'
     "The endpoint the query was made against."
@@ -242,9 +246,11 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
+
+
 @apiv0.route('/xml/')
-@apiv0.route('/xml/<path:ivorn>')
-def get_xml(ivorn=None):
+@apiv0.route('/xml/<path:url_encoded_ivorn>')
+def get_xml(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
     """
@@ -256,15 +262,12 @@ def get_xml(ivorn=None):
     # However, the werkzeug simple-server decodes these by default,
     # resulting in differing dev / production behaviour, which we handle here.
 
-    if ivorn and current_app.config.get('APACHE_NODECODE'):
-        ivorn = urllib.unquote(ivorn)
-
+    if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
+        ivorn = urllib.unquote(url_encoded_ivorn)
+    else:
+        ivorn = url_encoded_ivorn
     if ivorn is None:
-        abort(400,
-              """
-              Please supply an IVORN.
-              """
-              )
+        raise IvornNotSupplied
     xml = db_session.query(Voevent.xml).filter(
         Voevent.ivorn == ivorn
     ).scalar()
@@ -273,15 +276,4 @@ def get_xml(ivorn=None):
         r.mimetype = 'text/xml'
         return r
     else:
-        abort(404,
-              """
-              Sorry, IVORN:
-              "{}"
-              not found in the cache.
-
-              If your IVORN has been truncated at the '#' character,
-              then it probably just needs to be
-              <a href="http://meyerweb.com/eric/tools/dencoder/">
-              URL-encoded</a>.
-              """.format(ivorn)
-              )
+        raise IvornNotFound(ivorn)

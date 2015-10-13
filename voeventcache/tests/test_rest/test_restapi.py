@@ -24,7 +24,13 @@ class TestWithEmptyDatabase:
         rv = self.c.get(url_for(apiv0.name+'.count'))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
+        assert rv.mimetype == 'application/json'
         assert rd[ResultKeys.result] == 0
+
+    def test_no_ivorn(self):
+        rv = self.c.get(url_for(apiv0.name+'.get_xml'))
+        assert rv.status_code == 400
+
 
 
 class TestWithSimpleDatabase:
