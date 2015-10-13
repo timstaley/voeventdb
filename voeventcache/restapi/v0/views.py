@@ -5,6 +5,7 @@ from flask import (
     current_app
 )
 from flask.views import View
+import urllib
 
 from voeventcache.database import session_registry as db_session
 from voeventcache.database.models import Voevent
@@ -14,8 +15,6 @@ from voeventcache.restapi.v0.filters import apply_filters
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
-
-default_query_limit = 100
 
 class PaginationKeys:
     """
@@ -116,8 +115,7 @@ class ListQueryView(View):
     def dispatch_request(self):
         limit = request.args.get(PaginationKeys.limit, None)
         if not limit:
-            limit = current_app.config.get('DEFAULT_QUERY_LIMIT',
-                                           default_query_limit)
+            limit = current_app.config['DEFAULT_QUERY_LIMIT']
         q = self.get_query()
         q = apply_filters(q, request.args)
         q = q.order_by(Voevent.id)
@@ -244,13 +242,29 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
+@apiv0.route('/xml/')
 @apiv0.route('/xml/<path:ivorn>')
 def get_xml(ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
     """
-    if not ivorn:
-        abort(400)
+    # Handle Apache / Debug server difference...
+    # Apache conf must include the setting::
+    #   AllowEncodedSlashes NoDecode
+    # otherwise urlencoded paths have
+    # double-slashes ('//') replaced with single-slashes ('/').
+    # However, the werkzeug simple-server decodes these by default,
+    # resulting in differing dev / production behaviour, which we handle here.
+
+    if ivorn and current_app.config.get('APACHE_NODECODE'):
+        ivorn = urllib.unquote(ivorn)
+
+    if ivorn is None:
+        abort(400,
+              """
+              Please supply an IVORN.
+              """
+              )
     xml = db_session.query(Voevent.xml).filter(
         Voevent.ivorn == ivorn
     ).scalar()
@@ -259,15 +273,14 @@ def get_xml(ivorn=None):
         r.mimetype = 'text/xml'
         return r
     else:
-        if ivorn is None:
-            ivorn = "(No IVORN supplied!)"
         abort(404,
               """
               Sorry, IVORN:
               "{}"
               not found in the cache.
 
-              If your IVORN has been truncated, it probably needs to be
+              If your IVORN has been truncated at the '#' character,
+              then it probably just needs to be
               <a href="http://meyerweb.com/eric/tools/dencoder/">
               URL-encoded</a>.
               """.format(ivorn)

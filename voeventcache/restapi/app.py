@@ -2,6 +2,7 @@
 """
 Initialize the Flask app.
 """
+from __future__ import absolute_import
 from voeventcache.database import session_registry
 from voeventcache.restapi.v0 import apiv0
 from voeventcache.restapi.restlessapi import restless_manager
@@ -10,6 +11,7 @@ from sqlalchemy import engine
 from flask import Flask, render_template, url_for, send_from_directory, request
 
 app = Flask(__name__)
+app.config.from_object('voeventcache.restapi.default_config')
 app.register_blueprint(apiv0)
 
 
@@ -51,5 +53,5 @@ if __name__ == '__main__':
                                       'docs', 'build', 'html')
         return send_from_directory(docs_build_dir, filename)
 
-
+    app.config['APACHE_NODECODE'] = False
     app.run(debug=True)
