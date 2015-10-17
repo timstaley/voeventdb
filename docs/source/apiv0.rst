@@ -14,6 +14,7 @@ entry in the JSON-dict. See `returned content`_ for details.
 .. autoflask:: voeventcache.restapi.app:app
     :blueprints: apiv0
 
+----------------------------
 
 Returned content
 ----------------
@@ -21,6 +22,7 @@ Returned content
     :members:
     :undoc-members:
 
+----------------------------
 
 List-pagination controls
 ------------------------
@@ -32,7 +34,7 @@ results when querying a list-endpoint and returning a large number of entries:
     :members:
     :undoc-members:
 
-
+----------------------------
 
 Query filters
 ---------------------------

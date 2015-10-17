@@ -18,7 +18,7 @@ class TestWithEmptyDatabase:
 
     def test_api_root(self):
         rv = self.c.get(apiv0.url_prefix + '/')
-        assert rv.status_code == 404
+        assert rv.status_code == 200
 
     def test_api_count(self):
         rv = self.c.get(url_for(apiv0.name+'.count'))

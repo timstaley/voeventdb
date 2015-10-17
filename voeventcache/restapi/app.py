@@ -5,7 +5,7 @@ Initialize the Flask app.
 from __future__ import absolute_import
 from voeventcache.database import session_registry
 from voeventcache.restapi.v0 import apiv0
-from voeventcache.restapi.v0.errors import (IvornNotFound,IvornNotSupplied)
+from voeventcache.restapi.v0.errors import (IvornNotFound, IvornNotSupplied)
 from voeventcache.tests.config import testdb_scratch_url, testdb_corpus_url
 
 from sqlalchemy import engine
@@ -25,25 +25,6 @@ def shutdown_session(exception=None):
     session_registry.remove()
 
 
-@app.errorhandler(IvornNotFound)
-@app.errorhandler(IvornNotSupplied)
-def ivorn_error(error):
-    return render_template('errorbase.html',
-                           error=error
-                           ), error.code
-
-@app.errorhandler(404)
-def page_not_found(abort_error):
-    apiv0_rules = [r for r in sorted(app.url_map.iter_rules())
-             if r.endpoint.startswith('apiv0')]
-    docs_url = app.config.get('DOCS_URL', 'http://' + request.host + '/docs')
-    return render_template('404.html',
-                           rules=apiv0_rules,
-                           docs_url=docs_url,
-                           error=abort_error
-                           ), abort_error.code
-
-
 if __name__ == '__main__':
     """
     Run the app in debug mode for development.
@@ -60,6 +41,7 @@ if __name__ == '__main__':
         docs_build_dir = os.path.join(os.path.dirname(package_root_dir),
                                       'docs', 'build', 'html')
         return send_from_directory(docs_build_dir, filename)
+
 
     app.config['APACHE_NODECODE'] = False
     app.run(debug=True)

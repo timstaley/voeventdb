@@ -1,0 +1,10 @@
+<p>
+    Available REST endpoints are listed below (or try the
+    <a href="{{ docs_url }}">docs</a>?).
+
+</p>
+<ul>
+    {% for r in rules %}
+    <li><a href="{{r}}">{{ r }}</a></li>
+    {% endfor %}
+</ul>
