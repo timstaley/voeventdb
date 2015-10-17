@@ -10,10 +10,6 @@ Most endpoints return a JSON-encoded dictionary;
 the 'Result' values documented below refer to the contents of the ``result``
 entry in the JSON-dict. See `returned content`_ for details.
 
-.. note::
-
-    Clicking the 'Result' headers below will direct you to the relevant
-    endpoint.
 
 .. autoflask:: voeventcache.restapi.app:app
     :blueprints: apiv0

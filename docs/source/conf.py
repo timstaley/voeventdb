@@ -131,24 +131,14 @@ import textwrap
 
 def add_hyperlink_to_docstring(rule, app):
     view_func = app.view_functions[rule.endpoint]
+    print "Monkey-patching ", rule
     rawdoc = textwrap.dedent(view_func.__doc__)
-    view_func.__doc__ = rawdoc.replace('Result:',
-                                       '`Result: <{}>`_'.format(str(rule)))
-
-    # If it's the xml endpoint
-    # (ignore all but the bare endpoint to avoid dupes).
-    if (r.endpoint.split('.')[-1] == 'get_xml' and
-                str(r)[-1] != '>'
-        ):
-        view_func.__doc__ = '\n(`Link to bare url <{}>`_)\n'.format(str(rule)) + rawdoc
+    target = str(rule).split('<')[0]
+    view_func.__doc__ = '\n(`Link <{}>`__)\n'.format(target) + rawdoc
 
 
-        # hyperlink_header = """\
-        # \n(`{rule} <{rule}>`_)
-        # """.format(rule=str(rule))
-        # # view_func.__doc__ = hyperlink_header + view_func.__doc__
-        # view_func.__doc__ =  hyperlink_header + rawdoc#+ '\nfoo\n\n'
-
-
+hyperlinked_endpoints = set()
 for r in apiv0_rules:
-    add_hyperlink_to_docstring(r, app)
+    if r.endpoint not in hyperlinked_endpoints:
+        add_hyperlink_to_docstring(r, app)
+        hyperlinked_endpoints.add(r.endpoint)
