@@ -1,4 +1,16 @@
+from __future__ import absolute_import
 from flask import url_for
+
+class InvalidQueryString(Exception):
+    code = 400
+    description = "Invalid query-string"
+    def __init__(self, querystring_key, querystring_value):
+        Exception.__init__(self)
+        self.message = """
+            Error parsing query-string - could not parse this section:
+            "{0}={1}"
+            """.format(querystring_key, querystring_value)
+
 class IvornNotFound(Exception):
     code = 422
     description = "IVORN not found"
@@ -31,5 +43,3 @@ class IvornNotSupplied(Exception):
             IVORN listings can be found at
             <a href="{0}">{0}</a>.
             """.format(url_for('apiv0.ivorn'))
-
-

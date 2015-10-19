@@ -9,6 +9,7 @@ import iso8601
 import pytz
 from collections import OrderedDict
 import logging
+
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
@@ -23,6 +24,7 @@ def _grab_xpath(root, xpath, converter=lambda x: x):
         return converter(str(elements[0]))
     else:
         return None
+
 
 class OdictMixin(object):
     def to_odict(self):
@@ -101,8 +103,6 @@ class Voevent(Base, OdictMixin):
         row.cites = Cite.from_etree(root)
         return row
 
-
-
     def _reformatted_prettydict(self, valformat=str):
         pd = self.prettydict()
         return '\n'.join(
@@ -124,26 +124,41 @@ class Voevent(Base, OdictMixin):
 
 class Cite(Base, OdictMixin):
     """
-    Record the citations given by each VOEvent.
+    Record the references cited from each VOEvent.
 
     Relationship is one Voevent -> Many Cites.
 
-    This is quite inefficient (e.g. in the case that the IVORN is known to the
-    database, and is cited by many Voevents) but necessary, since we may see an
-    IVORN cited which is not present. If this becomes an issue, I can imagine
-    various schemes where e.g. a Voevent is created with just a bare IVORN and
-    no other data if it's cited but not ingested, with a flag-bit set
-    accordingly. Or we could create a separate 'cited IVORNS' table. But
-    probably you ain't gonna need it.
 
-    (P.S. Yes, cite is a valid noun form in addition to verb:
-    http://www.grammarphobia.com/blog/2011/10/cite.html
-    And it's much shorter than 'citation'.)
+    .. note:: On store-by-value vs store-by-reference
 
-    Note that technically there's a slight model mismatch here: What we're
-    really modelling are the EventIVORN entries in the Citations section
-    of the VOEvent, which typically share a description between them.
-    This may result in duplicated descriptions. Meh.
+        NB, we store the ref_ivorn string values in the Cite table rows. This is
+        quite inefficient compared to referencing the ID of a Voevent that has
+        been previously loaded (in the case that one IVORN is cited by many
+        Voevents). However, it's necessary, since we may see an IVORN cited for
+        which we don't have the primary entry. If this inefficiency ever becomes
+        an issue, I can imagine various schemes where e.g. a Voevent is created
+        with just a bare IVORN and no other data if it's cited but not ingested,
+        with a flag-bit set accordingly. Or we could create a separate 'cited
+        IVORNS' table. But probably you ain't gonna need it.
+
+
+    .. note:: On naming
+
+        `Reference` might be a more appropriate class name, but it's a reserved
+        Postgres word, cf
+        http://www.postgresql.org/docs/9.3/static/sql-keywords-appendix.html .
+        Grammatically speaking, `cite` is a valid noun form, in addition to
+        verb: http://www.grammarphobia.com/blog/2011/10/cite.html And it's much
+        shorter than 'citation'.
+
+
+    .. note:: On descriptions
+
+        Note that technically there's a slight model mismatch here: What we're
+        really modelling are the EventIVORN entries in the Citations section of
+        the VOEvent, which typically share a description between them. This may
+        result in duplicated descriptions (but most packets only have a single
+        reference anyway).
 
     """
     __tablename__ = 'cite'
@@ -158,7 +173,6 @@ class Cite(Base, OdictMixin):
                        nullable=False
                        )
     description = Column(sql.String)
-
 
     @staticmethod
     def from_etree(root):

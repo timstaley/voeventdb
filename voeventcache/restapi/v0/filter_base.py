@@ -1,14 +1,16 @@
+from __future__ import absolute_import
+from voeventcache.restapi.v0.apierror import InvalidQueryString
 """
 Define the underlying machinery we'll use to implement query filters.
 """
 
-filter_registry = []
+filter_registry = {}
 
 def add_to_filter_registry(cls):
     """
     To be used as a class decorator
     """
-    filter_registry.append(cls())
+    filter_registry[cls.querystring_key] = cls()
     return cls
 
 class QueryFilter(object):
@@ -63,9 +65,14 @@ def apply_filters(query, args):
     """
     Apply all QueryFilters.
     """
-    for cls_inst in filter_registry:
-        if cls_inst.querystring_key in args:
+    for querystring_key,filter_value in args.iteritems(multi=True):
+        if querystring_key in filter_registry:
+            cls_inst = filter_registry[querystring_key]
             query = cls_inst.apply_filter(query, args)
+        elif querystring_key=='limit' or querystring_key=='offset':
+            pass
+        else:
+            raise InvalidQueryString(querystring_key,filter_value)
     return query
 
 def list_querystring_keys():

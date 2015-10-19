@@ -1,7 +1,12 @@
-from voeventcache.database.models import Voevent
-from .filter_base import add_to_filter_registry, QueryFilter, apply_filters
+from __future__ import absolute_import
+from voeventcache.database.models import Voevent, Cite
+import voeventcache.restapi.v0.apierror as apierror
+from voeventcache.restapi.v0.filter_base import (
+    add_to_filter_registry, QueryFilter)
 import iso8601
-from sqlalchemy import or_, and_
+from sqlalchemy import (or_, and_, exists,
+                        )
+from sqlalchemy.orm import aliased
 import urllib
 
 
@@ -47,6 +52,114 @@ class AuthoredUntil(QueryFilter):
 
 
 @add_to_filter_registry
+class CiteAny(QueryFilter):
+    """
+    Return only VOEvents which have / do not have citations to other VOEvents.
+
+    Applied via query-strings ``has_citations=true`` or ``has_citations=false``
+    """
+    querystring_key = 'cite_any'
+    example_values = ['true',
+                      'false'
+                      ]
+
+    def filter(self, filter_value):
+        filter_q = Voevent.cites.any()
+        if filter_value.lower() == 'true':
+            return filter_q
+        elif filter_value.lower() == 'false':
+            return ~filter_q
+        else:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value)
+
+
+@add_to_filter_registry
+class CitedByAny(QueryFilter):
+    """
+    Return only VOEvents which are cited by another VOEvent in the database.
+    """
+    querystring_key = 'cited_by_any'
+    example_values = ['true',
+                      'false'
+                      ]
+
+    def filter(self, filter_value):
+        cite2 = aliased(Cite)
+        filter_q = exists().where(Voevent.ivorn == cite2.ref_ivorn)
+        if filter_value.lower() == 'true':
+            return filter_q
+        elif filter_value.lower() == 'false':
+            return ~filter_q
+        else:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value)
+
+
+@add_to_filter_registry
+class CiteExact(QueryFilter):
+    """
+    Return only VOEvents which cite the given (url-encoded) IVORN.
+
+    """
+    querystring_key = 'cite_exact'
+    example_values = [
+        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
+        urllib.quote_plus(
+            'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
+    ]
+
+    def filter(self, filter_value):
+        return Voevent.cites.any(Cite.ref_ivorn == filter_value)
+
+    def combinator(self, filters):
+        """OR"""
+        return or_(filters)
+
+# @add_to_filter_registry
+# class CitedByExact(QueryFilter):
+#     """
+#     Return only VOEvents which are cited from another VOEvent with given IVORN.
+#     """
+#     querystring_key = 'cited_by_exact'
+#     example_values = [
+#         urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
+#         urllib.quote_plus(
+#             'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
+#     ]
+#
+#     def filter(self, filter_value):
+#         citing_refs = aliased(Cite)
+#         citing_voevent = aliased(Voevent)
+#         return and_( citing_refs.ref_ivorn == Voevent.ivorn,
+#                      citing_refs.voevent_id == citing_voevent.id,
+#                      citing_voevent.ivorn == filter_value
+#                      )
+
+
+@add_to_filter_registry
+class CiteContains(QueryFilter):
+    """
+    Return only VOEvents which cite an IVORN containing the given substring.
+
+    """
+    querystring_key = 'cite_contains'
+    example_values = [
+        urllib.quote_plus('BAT_GRB_Pos'),
+        urllib.quote_plus('GBM_Alert'),
+    ]
+
+    def filter(self, filter_value):
+        return Voevent.cites.any(
+            Cite.ref_ivorn.like('%{}%'.format(filter_value))
+        )
+
+    def combinator(self, filters):
+        """OR"""
+        return or_(filters)
+
+
+@add_to_filter_registry
 class IvornContains(QueryFilter):
     """
     Return only VOEvents which have the given substring in their IVORN.
@@ -59,6 +172,7 @@ class IvornContains(QueryFilter):
         return Voevent.ivorn.like('%{}%'.format(filter_value))
 
     def combinator(self, filters):
+        """OR"""
         return or_(filters)
 
 
@@ -83,6 +197,7 @@ class IvornPrefix(QueryFilter):
         return Voevent.ivorn.like('{}%'.format(filter_value))
 
     def combinator(self, filters):
+        """OR"""
         return or_(filters)
 
 
@@ -99,6 +214,7 @@ class RoleEquals(QueryFilter):
         return Voevent.role == filter_value
 
     def combinator(self, filters):
+        """OR"""
         return or_(filters)
 
 
@@ -109,12 +225,10 @@ class StreamEquals(QueryFilter):
         'nasa.gsfc.gcn#SWIFT',
         'nvo.caltech/voeventnet/catot'
     ]
+
     def filter(self, filter_value):
         return Voevent.stream == filter_value
 
     def combinator(self, filters):
+        """OR"""
         return or_(filters)
-
-
-
-

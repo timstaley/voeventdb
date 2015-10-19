@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 import pytest
-from voeventcache.restapi.v0 import apiv0
-from voeventcache.restapi.v0 import ResultKeys
+from voeventcache.database.models import Cite
+from voeventcache.restapi.v0.views import apiv0
+from voeventcache.restapi.v0.viewbase import ResultKeys
 import voeventcache.restapi.v0.views as views
 import json
-from flask import url_for, request
+import urllib
+from flask import url_for
 
 @pytest.mark.usefixtures('fixture_db_session')
 class TestWithEmptyDatabase:
@@ -21,7 +23,7 @@ class TestWithEmptyDatabase:
         assert rv.status_code == 200
 
     def test_api_count(self):
-        rv = self.c.get(url_for(apiv0.name+'.count'))
+        rv = self.c.get(url_for(apiv0.name+'.'+views.Count.view_name))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
         assert rv.mimetype == 'application/json'
@@ -30,6 +32,11 @@ class TestWithEmptyDatabase:
     def test_no_ivorn(self):
         rv = self.c.get(url_for(apiv0.name+'.get_xml'))
         assert rv.status_code == 400
+
+    def test_ivorn_not_found(self):
+        rv = self.c.get(url_for(apiv0.name+'.get_xml') +
+                        urllib.quote_plus('foobar_invalid_ivorn'))
+        assert rv.status_code == 422
 
 
 
@@ -40,7 +47,7 @@ class TestWithSimpleDatabase:
 
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
-        rv = self.c.get(url_for(apiv0.name+'.count'))
+        rv = self.c.get(url_for(apiv0.name+'.'+views.Count.view_name))
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
@@ -53,23 +60,39 @@ class TestWithSimpleDatabase:
         pkt = simple_populated_db.insert_packets[pkt_index]
         authored_until_dt = pkt.Who.Date
 
-        qry_url = url_for(apiv0.name+'.count',
+        qry_url = url_for(apiv0.name+'.'+views.Count.view_name,
                           authored_until=authored_until_dt)
         with self.c as c:
             rv = self.c.get(qry_url)
             # print "ARGS:", request.args
-        rd = json.loads(rv.data)
-        # print rd
+
         assert rv.status_code == 200
+        rd = json.loads(rv.data)
         assert rd[ResultKeys.result] == pkt_index +1 # date bounds are inclusive
         assert rd[ResultKeys.querystring] == dict(authored_until = [authored_until_dt,])
+
+    def test_count_w_multiquery(self, simple_populated_db):
+        dbinf = simple_populated_db
+        qry_url = (
+            url_for(apiv0.name+'.'+views.Count.view_name)
+                +'?' +
+                urllib.urlencode((('role','test'),
+                                  ('role','utility'),
+                                  ('role','observation')))
+        )
+        rv=self.c.get(qry_url)
+        assert rv.status_code == 200
+        rd = json.loads(rv.data)
+        assert rd[ResultKeys.result] == dbinf.n_inserts
+
+
 
     def test_ivornlist(self, simple_populated_db):
         dbinf = simple_populated_db
         ivorn_list_url = url_for(apiv0.name+'.'+views.IvornList.view_name)
         rv = self.c.get(ivorn_list_url)
-        rd = json.loads(rv.data)
         assert rv.status_code == 200
+        rd = json.loads(rv.data)
         assert rd[ResultKeys.result] == dbinf.inserted_ivorns
 
     def test_consistent_ordering(self, simple_populated_db):
@@ -83,7 +106,7 @@ class TestWithSimpleDatabase:
 
                 order_by(Voevent.id)
 
-        but this test is will not fail even without that line.
+        but this test will not fail even without that line.
         Will leave this here as a sort of 'to do' marker.
 
         """
@@ -103,3 +126,77 @@ class TestWithSimpleDatabase:
         rs0 = result_sets[0]
         for rs in result_sets:
             assert rs == rs0
+
+
+    def test_reference_counts(self, simple_populated_db):
+        with self.c as c:
+            url = url_for(apiv0.name + '.' + views.IvornReferenceCount.view_name)
+            rv = self.c.get(url)
+        assert rv.status_code == 200
+        rd = json.loads(rv.data)
+        ivorn_refcounts = rd[ResultKeys.result]
+        counts = zip(*ivorn_refcounts)[1]
+        assert sum(counts) == simple_populated_db.n_citations
+        for ivorn, refcount in ivorn_refcounts:
+            assert bool(refcount) == (ivorn in simple_populated_db.followup_packets)
+
+
+    def test_cited_counts(self, simple_populated_db):
+        with self.c as c:
+            url = url_for(apiv0.name + '.' + views.IvornCitedFromCount.view_name)
+            rv = self.c.get(url)
+        assert rv.status_code == 200
+        rd = json.loads(rv.data)
+        ivorn_citecounts = rd[ResultKeys.result]
+        counts = zip(*ivorn_citecounts)[1]
+        assert sum(counts) == simple_populated_db.n_citations
+        for ivorn, citecount in ivorn_citecounts:
+            assert bool(citecount) == (ivorn in simple_populated_db.cited)
+
+    def test_xml_retrieval(self, simple_populated_db):
+        url = url_for(apiv0.name+'.get_xml')
+        url += urllib.quote_plus(simple_populated_db.absent_ivorn)
+        rv = self.c.get(url)
+        assert rv.status_code == 422
+
+        present_ivorn = simple_populated_db.inserted_ivorns[0]
+        present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
+        url = url_for(apiv0.name+'.get_xml')
+        url += urllib.quote_plus(present_ivorn)
+        rv = self.c.get(url)
+        assert rv.status_code == 200
+        assert rv.mimetype == 'text/xml'
+        assert rv.data == present_ivorn_xml_content
+
+
+    def test_ref_retrieval(self, simple_populated_db):
+        #Null case, ivorn not in DB:
+        ep_url = url_for(apiv0.name+'.get_cites')
+        url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
+        rv = self.c.get(url)
+        assert rv.status_code == 422
+
+        # Positive case, ivorn which has references:
+        ivorn_w_refs = list(simple_populated_db.followup_packets)[0]
+        url = ep_url +  urllib.quote_plus(ivorn_w_refs)
+        rv = self.c.get(url)
+        assert rv.status_code == 200
+        rd = json.loads(rv.data)
+        refs = rd[ResultKeys.result]
+        etree = simple_populated_db.packet_dict[ivorn_w_refs]
+        assert len(refs) == len(Cite.from_etree(etree))
+
+        # Negative case, IVORN present but packet contains no references
+        all_ivorns = set(simple_populated_db.packet_dict.keys())
+        ivorns_wo_refs = list(all_ivorns - simple_populated_db.followup_packets)
+        ivorn = ivorns_wo_refs[0]
+        url = ep_url + urllib.quote_plus(ivorn)
+        rv = self.c.get(url)
+        assert rv.status_code == 200
+        rd = json.loads(rv.data)
+        refs = rd[ResultKeys.result]
+        assert len(refs) == 0
+
+
+
+    # def test_ref_view(self, simple_populated_db):

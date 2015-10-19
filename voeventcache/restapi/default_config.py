@@ -6,3 +6,5 @@ DEFAULT_QUERY_LIMIT = 100
 # and apply the Apache conf setting 'AllowEncodedSlashes NoDecode'.
 # This prevents Apache mangling the IVORN path, replacing '//' with '/'.
 APACHE_NODECODE = True
+
+# JSONIFY_PRETTYPRINT_REGULAR = False

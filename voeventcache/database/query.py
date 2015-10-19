@@ -1,6 +1,8 @@
 from __future__ import absolute_import
-from voeventcache.database.models import Voevent
-from sqlalchemy import func
+from voeventcache.database.models import Voevent, Cite
+from sqlalchemy import func, exists
+from sqlalchemy.orm import aliased
+
 
 def authored_month_counts_q(session):
     s = session
@@ -12,14 +14,37 @@ def authored_month_counts_q(session):
     return month_counts_qry
 
 
-def stream_counts_q(session):
-    s = session
-    stream_counts_qry = s.query(
-        Voevent.stream.distinct().label('stream_id'),
-        (func.count(Voevent.ivorn)).label('stream_count'),
-    ).select_from(Voevent). \
-        group_by(Voevent.stream)
-    return stream_counts_qry
+def ivorn_cites_to_others_count_q(session):
+    cites_to_others_count_qry = session.query(
+        Voevent.ivorn.label('ivorn'),
+        func.count(Cite.id).label('ref_count')
+    ).outerjoin(Cite).group_by(Voevent.id)
+    return cites_to_others_count_qry
+
+
+def ivorn_cited_from_others_count_q(session):
+    cite2 = aliased(Cite)
+    cites_from_others_count_qry = session.query(
+        Voevent.ivorn.label('ivorn'),
+        func.count(cite2.id).label('citation_count')
+    ).outerjoin(cite2, cite2.ref_ivorn == Voevent.ivorn).group_by(Voevent.id)
+    return cites_from_others_count_qry
+
+
+def _missing_cites_clause():
+    voevent2 = aliased(Voevent)
+    missing_cites_condition = ~exists().where(Cite.ref_ivorn == voevent2.ivorn)
+    return missing_cites_condition
+
+
+def missing_cites_q(session):
+    return session.query(Cite.ref_ivorn). \
+        filter(_missing_cites_clause())
+
+
+def packet_with_missing_cites_q(session):
+    return session.query(Voevent.ivorn). \
+        filter(Voevent.cites.any(_missing_cites_clause()))
 
 
 def role_counts_q(session):
@@ -32,6 +57,16 @@ def role_counts_q(session):
     return role_counts_qry
 
 
+def stream_counts_q(session):
+    s = session
+    stream_counts_qry = s.query(
+        Voevent.stream.distinct().label('stream_id'),
+        (func.count(Voevent.ivorn)).label('stream_count'),
+    ).select_from(Voevent). \
+        group_by(Voevent.stream)
+    return stream_counts_qry
+
+
 def stream_counts_role_breakdown_q(session):
     s = session
     stream_counts_role_breakdown_qry = s.query(
@@ -42,6 +77,3 @@ def stream_counts_role_breakdown_q(session):
         group_by(Voevent.stream, Voevent.role)
 
     return stream_counts_role_breakdown_qry
-
-
-

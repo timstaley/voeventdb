@@ -4,8 +4,9 @@ Initialize the Flask app.
 """
 from __future__ import absolute_import
 from voeventcache.database import session_registry
-from voeventcache.restapi.v0 import apiv0
-from voeventcache.restapi.v0.errors import (IvornNotFound, IvornNotSupplied)
+import voeventcache.restapi.v0
+from voeventcache.restapi.v0.views import apiv0
+from voeventcache.restapi.v0.apierror import (IvornNotFound, IvornNotSupplied)
 from voeventcache.tests.config import testdb_scratch_url, testdb_corpus_url
 
 from sqlalchemy import engine
@@ -29,7 +30,9 @@ if __name__ == '__main__':
     """
     Run the app in debug mode for development.
     """
-    session_registry.configure(bind=engine.create_engine(testdb_corpus_url))
+    session_registry.configure(
+        bind=engine.create_engine(testdb_corpus_url, echo=True)
+    )
 
 
     @app.route('/docs/')

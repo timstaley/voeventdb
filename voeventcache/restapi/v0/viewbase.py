@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """
 Base classes used for generating views
 """
@@ -5,7 +6,7 @@ from flask.views import View
 from flask import (
     jsonify, request, current_app
 )
-from voeventcache.restapi.v0.filters import apply_filters
+from voeventcache.restapi.v0.filter_base import apply_filters
 from voeventcache.database.models import Voevent
 
 
@@ -32,7 +33,9 @@ class PaginationKeys:
 
 class ResultKeys:
     """
-    All endpoints (except the XML-request) return a JSON-encoded dictionary.
+    Most :ref:`endpoints` return a JSON-encoded dictionary.
+
+    (Exceptions are special endpoints like the XML-request.)
 
     At the top level, the dictionary will contain some or all of the following
     keys:
@@ -102,9 +105,9 @@ class ListQueryView(View):
 
     def process_query(self, query):
         """
-        By default, simply return the first column of rows in the list.
+        By default, simply return all columns.
         """
-        return list(row[0] for row in query)
+        return query.all()
 
     def dispatch_request(self):
         limit = request.args.get(PaginationKeys.limit, None)

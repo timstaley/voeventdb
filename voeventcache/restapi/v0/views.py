@@ -1,21 +1,26 @@
 from __future__ import absolute_import
 
 from flask import (
-    Blueprint, request, make_response, render_template, current_app
+    Blueprint, request, make_response, render_template, current_app,
+    jsonify
 )
 
 import urllib
 
 from voeventcache.database import session_registry as db_session
-from voeventcache.database.models import Voevent
+from voeventcache.database.models import Voevent, Cite
 import voeventcache.database.convenience as convenience
+import voeventcache.restapi.v0.apierror as apierror
 import voeventcache.database.query as query
 from voeventcache.restapi.v0.viewbase import (
-    QueryView, ListQueryView, _add_to_api, ResultKeys, PaginationKeys
+    QueryView, ListQueryView, _add_to_api, make_response_dict
 )
-from voeventcache.restapi.v0.errors import (
-    IvornNotFound, IvornNotSupplied
-)
+
+# This import may look unused, but activates the filter registry -
+# Do not delete!
+import voeventcache.restapi.v0.filters
+
+
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
@@ -29,8 +34,15 @@ def add_to_apiv0(queryview_class):
 
 
 def get_apiv0_rules():
-    return [r for r in sorted(current_app.url_map.iter_rules())
+    rules =  [r for r in sorted(current_app.url_map.iter_rules())
             if r.endpoint.startswith('apiv0')]
+    endpoints_listed = set()
+    pruned_rules = []
+    for r in rules:
+        if r.endpoint not in endpoints_listed:
+            pruned_rules.append(r)
+            endpoints_listed.add(r.endpoint)
+    return pruned_rules
 
 
 @apiv0.route('/')
@@ -49,9 +61,9 @@ def landing_pages():
 
                            )
 
-
-@apiv0.errorhandler(IvornNotFound)
-@apiv0.errorhandler(IvornNotSupplied)
+@apiv0.errorhandler(apierror.InvalidQueryString)
+@apiv0.errorhandler(apierror.IvornNotFound)
+@apiv0.errorhandler(apierror.IvornNotSupplied)
 def ivorn_error(error):
     return render_template('errorbase.html',
                            error=error
@@ -100,8 +112,8 @@ class AuthoredMonthCount(QueryView):
 @add_to_apiv0
 class Count(QueryView):
     """
-    Result:
-        Int: Number of packets matching querystring.
+    Result (int):
+        Number of packets matching querystring.
 
     Returns total number of packets in database if the querystring is blank.
     """
@@ -117,13 +129,55 @@ class Count(QueryView):
 @add_to_apiv0
 class IvornList(ListQueryView):
     """
-    Result:
-        List: All ivorns matching querystring.
+    Result (list of strings):
+        ``[ ivorn1, ivorn2, ... ]``
+
+    List of ivorns matching querystring. Number returned is limited by the
+    ``limit`` parameter, which defaults to 100 (see :ref:`pagination`).
     """
     view_name = 'ivorn'
 
     def get_query(self):
         return db_session.query(Voevent.ivorn)
+
+    def process_query(self, query):
+        """
+        Grab the first entry from every tuple as a single list.
+        """
+        return zip(*query.all())[0]
+
+
+@add_to_apiv0
+class IvornReferenceCount(ListQueryView):
+    """
+    Result (list of 2-element lists):
+        ``[[ivorn, n_refs], ...]``
+
+    Get rows containing reference counts. Row entries are
+
+     - IVORN of packet
+     - Number of references to other packets, in this packet.
+    """
+    view_name = 'ivorn_ref_count'
+
+    def get_query(self):
+        return query.ivorn_cites_to_others_count_q(db_session)
+
+@add_to_apiv0
+class IvornCitedFromCount(ListQueryView):
+    """
+    Result (list of 2-element lists):
+        ``[(ivorn, n_cited), ...]``
+
+    Get rows containing citation counts. Row entries are:
+
+        - IVORN of packet
+        - Number of times this packet is cited by others
+    """
+    view_name = 'ivorn_cited_count'
+
+    def get_query(self):
+        return query.ivorn_cited_from_others_count_q(db_session)
 
 
 @add_to_apiv0
@@ -171,6 +225,35 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
+
+@apiv0.route('/refs/')
+@apiv0.route('/refs/<path:url_encoded_ivorn>')
+def get_cites(url_encoded_ivorn=None):
+    """
+    Result (list of 3-element lists):
+        ``[[ref_ivorn, cite_type, description], ...]``
+
+    Returns the reference list for the packet specified by IVORN.
+
+    """
+    if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
+        ivorn = urllib.unquote(url_encoded_ivorn)
+    else:
+        ivorn = url_encoded_ivorn
+    if ivorn is None:
+        raise apierror.IvornNotSupplied
+    if not convenience.ivorn_present(db_session, ivorn):
+        raise apierror.IvornNotFound(ivorn)
+
+    cites = db_session.query(
+                Cite.ref_ivorn, Cite.cite_type, Cite.description).\
+            join(Voevent, Cite.voevent_id == Voevent.id).\
+            filter(Voevent.ivorn == ivorn).all()
+    return jsonify(make_response_dict(cites))
+
+
+
+
 @apiv0.route('/xml/')
 @apiv0.route('/xml/<path:url_encoded_ivorn>')
 def get_xml(url_encoded_ivorn=None):
@@ -190,7 +273,7 @@ def get_xml(url_encoded_ivorn=None):
     else:
         ivorn = url_encoded_ivorn
     if ivorn is None:
-        raise IvornNotSupplied
+        raise apierror.IvornNotSupplied
     xml = db_session.query(Voevent.xml).filter(
         Voevent.ivorn == ivorn
     ).scalar()
@@ -199,4 +282,4 @@ def get_xml(url_encoded_ivorn=None):
         r.mimetype = 'text/xml'
         return r
     else:
-        raise IvornNotFound(ivorn)
+        raise apierror.IvornNotFound(ivorn)
