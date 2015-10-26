@@ -1,4 +1,4 @@
-# voeventcache      [![Build Status](https://travis-ci.org/timstaley/voeventcache.svg?branch=master)](https://travis-ci.org/timstaley/voeventcache)
+# voeventdb      [![Build Status](https://travis-ci.org/timstaley/voeventdb.svg?branch=master)](https://travis-ci.org/timstaley/voeventdb)
 
 A database-store and accompanying RESTful query API for archiving and retrieving 
 [VOEvent](http://voevent.readthedocs.org/) packets.
@@ -30,7 +30,7 @@ For full details, consult the
 
 Note the unit-tests assume by default a database username/password which
 are both the same as your login username, but this can be edited in
-the [test config file](voeventcache/tests/config.py).
+the [test config file](voeventdb/tests/config.py).
 Alternatively, edit 
 [pg_hba.conf](http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html)
 appropriately, or consult a friendly sysadmin.

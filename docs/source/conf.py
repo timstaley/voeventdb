@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# voeventcache documentation build configuration file, created by
+# voeventdb documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct  6 14:09:26 2015.
 #
 
@@ -27,7 +27,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'voeventcache'
+project = u'voeventdb'
 copyright = u'2015, Tim Staley'
 author = u'Tim Staley'
 
@@ -65,7 +65,7 @@ html_show_sphinx = False
 # html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'voeventcachedoc'
+htmlhelp_basename = 'voeventdbdoc'
 
 
 # -- Options for manual page output ---------------------------------------
@@ -73,7 +73,7 @@ htmlhelp_basename = 'voeventcachedoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'voeventcache', u'voeventcache Documentation',
+    (master_doc, 'voeventdb', u'voeventdb Documentation',
      [author], 1)
 ]
 
@@ -84,8 +84,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'voeventcache', u'voeventcache Documentation',
-     author, 'voeventcache', 'One line description of project.',
+    (master_doc, 'voeventdb', u'voeventdb Documentation',
+     author, 'voeventdb', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -120,7 +120,7 @@ def get_routes(app, endpoint=None):
 
 autodocflask.get_routes = get_routes
 
-from voeventcache.restapi.app import app
+from voeventdb.restapi.app import app
 # OK, let's get ugly!
 # sphinx.contrib.autohttp has no way to hyperlink the endpoint headings.
 # So instead, we add hyperlinks in the docstrings of the APIV0 endpoints:

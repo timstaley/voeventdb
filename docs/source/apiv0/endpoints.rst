@@ -9,5 +9,5 @@ the 'Result' values documented below refer to the contents of the ``result``
 entry in the JSON-dict. See :ref:`returned-content` for details.
 
 
-.. autoflask:: voeventcache.restapi.app:app
+.. autoflask:: voeventdb.restapi.app:app
     :blueprints: apiv0

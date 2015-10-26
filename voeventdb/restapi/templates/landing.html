@@ -1,0 +1,27 @@
+<!doctype html>
+<head>
+    <title>
+        {% block title %} voeventdb {% endblock %}
+    </title>
+    <link rel=stylesheet type=text/css
+          href="{{ url_for('static', filename='css/minimalcss/minimal.css') }}">
+</head>
+
+<div class="container">
+    {% block content %}
+    <div class="row">
+        <div class="col-8">
+            <h1>voeventdb</h1>
+            <h2>{{ version }}</h2>
+            <p>{{ message }}</p>
+
+            <hr>
+            {% block extracontent %}
+            {% include "includes/endpoints.html" %}
+            {% endblock %}
+
+        </div>
+    </div>
+    {% endblock%}
+
+</div>

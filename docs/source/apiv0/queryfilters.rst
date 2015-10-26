@@ -12,7 +12,7 @@ which only ever returns a single XML packet matching an exact IVORN.
 
 .. _query string: https://en.wikipedia.org/wiki/Query_string
 
-.. automodule:: voeventcache.restapi.v0.filters
+.. automodule:: voeventdb.restapi.v0.filters
     :members:
     :undoc-members:
     :member-order: bysource

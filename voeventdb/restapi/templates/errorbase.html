@@ -1,0 +1,29 @@
+<!doctype html>
+<head>
+
+    <title>
+        {% block title %} {{ error.code }}: voeventdb - Error {% endblock %}
+    </title>
+
+    <link rel=stylesheet type=text/css
+          href="{{ url_for('static', filename='css/minimalcss/minimal.css') }}">
+</head>
+<div class="container">
+    {% block content %}
+    <div class="row">
+        <div class="col-8">
+            <h1> {{ error.code }}</h1>
+
+            <h3> {{ error.description }}</h3>
+
+            <p>
+                {{ error.message|safe }}
+            </p>
+            <hr>
+            {% block extracontent %}{% endblock %}
+
+        </div>
+    </div>
+    {% endblock%}
+
+</div>

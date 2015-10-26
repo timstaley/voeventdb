@@ -1,4 +1,4 @@
-Welcome to voeventcache's documentation!
+Welcome to voeventdb's documentation!
 ========================================
 
 Contents:
