@@ -80,6 +80,9 @@ class Voevent(Base, OdictMixin):
     cites = relationship("Cite", backref=backref('voevent', order_by=id),
                          cascade="all, delete, delete-orphan")
 
+    coords = relationship('Coord', backref=backref('voevent', order_by=id),
+                          cascade="all, delete, delete-orphan")
+
     @staticmethod
     def from_etree(root, received=pytz.UTC.localize(datetime.utcnow())):
         """
@@ -101,6 +104,7 @@ class Voevent(Base, OdictMixin):
         row.author_ivorn = _grab_xpath(root, 'Who/AuthorIVORN')
 
         row.cites = Cite.from_etree(root)
+        row.coords = Coord.from_etree(root)
         return row
 
     def _reformatted_prettydict(self, valformat=str):
@@ -205,3 +209,64 @@ class Cite(Base, OdictMixin):
         content = ',\n'.join(
             ("{}={}".format(k, repr(v)) for k, v in od.iteritems()))
         return """<Cite({})>""".format(content)
+
+
+class Coord(Base, OdictMixin):
+    """
+    Represents a co-ordinate position.
+
+    I.e. an entry in the WhereWhen section of a VOEvent.
+
+    For these entries to be of any use, we must choose a single standard format
+    from the wide array of possible VOEvent / STC recommended co-ordinate
+    systems and representations. See
+    http://www.ivoa.net/documents/REC/DM/STC-20071030.html
+    for reference.
+
+    Nominally, we will adopt UTC as the time-system, ICRS decimal degrees as the
+    celestial system / representation, and GEO as the reference position.
+
+    In practice, we take a relaxed attitude where GEO / TOPO are assumed
+    approximately equal, as are FK5/ICRS, and hence any matching substitutes are
+    loaded into the database without further co-ordinate transformation.
+
+    Additional transformation code may be implemented in future as requirements
+    and developer time dictate. As a fallback, the client can always request the
+    XML packet and inspect the native VOEvent representation for themselves,
+    assuming that other fields / naively parsed co-ordinates can be used to
+    restrict the number of plausibly relevant packets.
+    """
+    __tablename__ = 'coord'
+    id = Column(sql.Integer, primary_key=True)
+    voevent_id = Column(sql.Integer, ForeignKey(Voevent.id))
+    ra = Column(sql.Float, nullable=False, index=True)
+    decl = Column(sql.Float, nullable=False, index=True)
+    error = Column(
+        sql.Float,
+        doc="Error-circle radius associated with coordinate-position (degrees)"
+    )
+    time = Column(
+        sql.DateTime(timezone=True), nullable=False,
+        doc="Records timestamp associated with co-ordinate position of event"
+    )
+
+    @staticmethod
+    def from_etree(root):
+        """
+        Load up the coords, if present, for initializing with the Voevent.
+        """
+        position_list = []
+        astrocoords = root.xpath(
+            'WhereWhen/ObsDataLocation/ObservationLocation/AstroCoords'
+        )
+        if astrocoords:
+            for idx, entry in enumerate(astrocoords):
+                posn = vp.pull_astro_coords(root,idx)
+                isotime = vp.pull_isotime(root,idx)
+                position_list.append(
+                    Coord(ra = posn.ra,
+                          decl = posn.dec,
+                          error = posn.err,
+                          time = isotime)
+                )
+        return position_list

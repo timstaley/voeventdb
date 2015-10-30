@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from sqlalchemy.exc import IntegrityError
 
-from voeventdb.database.models import Voevent, Cite
+from voeventdb.database.models import Voevent, Cite, Coord
 from voeventdb.tests.resources import (
     swift_bat_grb_pos_v2_etree,
     swift_bat_grb_655721,
     swift_xrt_grb_655721,
 )
+import voeventdb.tests.fixtures.fake as fake
 import voeventparse as vp
 
 import pytest
@@ -108,3 +109,51 @@ class TestCiteInserts:
             scalar()
         assert backref_voevent.id == xcheck_voevent_id
         assert backref_voevent.ivorn == swift_xrt_grb_655721.attrib['ivorn']
+
+class TestCiteInserts:
+    """
+    Check that coords get inserted correctly
+    """
+
+    @pytest.fixture(autouse=True)
+    def insert_voevents(self, fixture_db_session):
+        """
+        Insert two Vovents (GRB, XRT followup) as setup
+
+        (NB XRT packet cites -> BAT packet.)
+        """
+        s = fixture_db_session
+        assert len(s.query(Voevent).all()) == 0  # sanity check
+        s.add(Voevent.from_etree(fake.heartbeat_packets()[0]))
+        s.add(Voevent.from_etree(swift_bat_grb_655721))
+        s.flush()
+        assert len(s.query(Voevent).all()) == 2 # 1 with, 1 without position
+
+    def test_coord_parsing(self):
+        positions_parsed = Coord.from_etree(swift_bat_grb_655721)
+        assert len(positions_parsed)==1
+
+    def test_coords_loaded(self, fixture_db_session):
+        s = fixture_db_session
+        n_total_coords = s.query(Coord).count()
+        assert n_total_coords == 1
+        grb_packet_coords = s.query(Voevent). \
+            filter(Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']). \
+            one().coords
+        assert len(grb_packet_coords) == 1
+        coord0 = grb_packet_coords[0]
+        bat_voevent_id = s.query(Voevent.id).filter(
+            Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']
+        ).scalar()
+        assert coord0.voevent_id == bat_voevent_id
+        position = vp.pull_astro_coords(swift_bat_grb_655721)
+        assert coord0.ra == position.ra
+        assert coord0.decl == position.dec
+        assert coord0.error == position.err
+
+    def test_backref_query(self, fixture_db_session):
+        """
+        """
+        s = fixture_db_session
+        coord1 = s.query(Coord).one()
+        assert coord1.voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']
