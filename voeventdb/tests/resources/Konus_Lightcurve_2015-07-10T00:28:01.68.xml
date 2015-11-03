@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<voe:VOEvent xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ivorn="ivo://nasa.gsfc.gcn/KONUS#Lightcurve_2015-07-10T00:28:01.68_000001-877" role="observation" version="2.0" xsi:schemaLocation="http://www.ivoa.net/xml/VOEvent/v2.0  http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd">
+  <Who>
+    <AuthorIVORN>ivo://nasa.gsfc.tan/gcn</AuthorIVORN>
+    <Author>
+      <shortName>KONUS (via VO-GCN)</shortName>
+      <contactName>Valentin Palshin</contactName>
+      <contactPhone>+7-812-2927177</contactPhone>
+      <contactEmail>val@mail.ioffe.ru</contactEmail>
+    </Author>
+    <Date>2015-07-10T05:17:20</Date>
+    <Description>This VOEvent message was created with GCN VOE version: 1.18 09jul15</Description>
+  </Who>
+  <What>
+    <Param name="Packet_Type" value="59"/>
+    <Param name="Pkt_Ser_Num" value="1"/>
+    <Param name="TrigID" value="1721301681" ucd="meta.id"/>
+    <Param name="Burst_TJD" value="17213" unit="days" ucd="time"/>
+    <Param name="Burst_SOD" value="1681.68" unit="sec" ucd="time"/>
+    <Param name="Coords_Type" value="0" unit="dn"/>
+    <Param name="Coords_String" value="unavailable/inappropriate"/>
+    <Param name="Trigger_ID" value="0x201"/>
+    <Param name="Light_Curve" value="http://gcn.gsfc.nasa.gov/gcn/notices_k/konus_lc_150710_01681.gif" ucd="meta.ref.url"/>
+    <Group name="Obs_Support_Info">
+      <Description>The Sun and Moon values are valid at the time the VOEvent XML message was created.</Description>
+      <Param name="Sun_RA" value="109.14" unit="deg" ucd="pos.eq.ra"/>
+      <Param name="Sun_Dec" value="22.27" unit="deg" ucd="pos.eq.dec"/>
+      <Param name="Sun_Distance" value="107.67" unit="deg" ucd="pos.angDistance"/>
+      <Param name="Sun_Hr_Angle" value="7.28" unit="hr"/>
+      <Param name="Moon_RA" value="34.00" unit="deg" ucd="pos.eq.ra"/>
+      <Param name="Moon_Dec" value="10.86" unit="deg" ucd="pos.eq.dec"/>
+      <Param name="MOON_Distance" value="35.49" unit="deg" ucd="pos.angDistance"/>
+      <Param name="Moon_Illum" value="34.78" unit="%" ucd="arith.ratio"/>
+      <Param name="Galactic_Long" value="0.00" unit="deg" ucd="pos.galactic.lon"/>
+      <Param name="Galactic_Lat" value="0.00" unit="deg" ucd="pos.galactic.lat"/>
+      <Param name="Ecliptic_Long" value="0.00" unit="deg" ucd="pos.ecliptic.lon"/>
+      <Param name="Ecliptic_Lat" value="0.00" unit="deg" ucd="pos.ecliptic.lat"/>
+    </Group>
+    <Description>The gamma-ray lightcurve of a transient detected by the KONUS-WIND instrument.</Description>
+  </What>
+  <WhereWhen>
+    <ObsDataLocation>
+      <ObservatoryLocation id="GEOLUN"/>
+      <ObservationLocation>
+        <AstroCoordSystem id="UTC-FK5-GEO"/>
+        <AstroCoords coord_system_id="UTC-FK5-GEO">
+          <Time unit="s">
+            <TimeInstant>
+              <ISOTime>2015-07-10T00:28:01.68</ISOTime>
+            </TimeInstant>
+          </Time>
+          <Position2D unit="deg">
+            <Name1>RA</Name1>
+            <Name2>Dec</Name2>
+            <Value2>
+              <C1>0.0000</C1>
+              <C2>0.0000</C2>
+            </Value2>
+            <Error2Radius>0.0000</Error2Radius>
+          </Position2D>
+        </AstroCoords>
+      </ObservationLocation>
+    </ObsDataLocation>
+    <Description>The RA,Dec coordinates are of the type: unavailable/inappropriate.</Description>
+  </WhereWhen>
+  <How>
+    <Description>WIND Satellite, KONUS Instrument</Description>
+    <Reference uri="http://gcn.gsfc.nasa.gov/konus.html" type="url"/>
+  </How>
+  <Why importance="1.0">
+    <Inference probability="0.5">
+      <Concept>process.variation.burst;em.gamma</Concept>
+    </Inference>
+  </Why>
+  <Description>
+  </Description>
+</voe:VOEvent>

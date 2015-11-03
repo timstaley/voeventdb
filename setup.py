@@ -9,7 +9,7 @@ install_requires = [
     'psycopg2',
     'pytz',
     'SQLAlchemy',
-    'voevent-parse',
+    'voevent-parse>=0.9',
 ]
 
 test_requires = [

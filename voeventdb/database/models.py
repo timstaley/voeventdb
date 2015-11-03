@@ -25,6 +25,38 @@ def _grab_xpath(root, xpath, converter=lambda x: x):
     else:
         return None
 
+def _has_bad_coords(root, stream):
+    """
+    Predicate function encapsulating 'data clean up' filter code.
+
+    Currently minimal, but these sort of functions tend to grow over time.
+
+    Problem 1:
+        Some of the GCN packets have an RA /Dec equal to (0,0) in the WhereWhen,
+        and a flag in the What signifying that those are actually dummy co-ords.
+        (This is used for time-stamping an event which is not localised).
+        So, we don't load those positions, to avoid muddying the database
+        corpus.
+    Problem 2:
+        com.dc3/dc3.broker#BrokerTest packets have dummy RA/Dec values,
+        with no units specified.
+        (They're also marked role=test, so it's not such a big deal,
+        but it generates a lot of debug-log churn.)
+    """
+    if stream == "com.dc3/dc3.broker":
+        return True
+    if not stream.split('/')[0] == 'nasa.gsfc.gcn':
+        return False
+    what_dict = vp.pull_params(root)
+    if "Coords_String" in what_dict[None]:
+        if (what_dict[None]["Coords_String"]['value'] ==
+                "unavailable/inappropriate"):
+            return True
+
+    return False
+
+
+
 
 class OdictMixin(object):
     def to_odict(self):
@@ -104,7 +136,14 @@ class Voevent(Base, OdictMixin):
         row.author_ivorn = _grab_xpath(root, 'Who/AuthorIVORN')
 
         row.cites = Cite.from_etree(root)
-        row.coords = Coord.from_etree(root)
+        if not _has_bad_coords(root, stream):
+            try:
+                row.coords = Coord.from_etree(root)
+            except:
+                logger.exception(
+                    'Error loading coords for ivorn {}, coords dropped.'.format(
+                        ivorn)
+                )
         return row
 
     def _reformatted_prettydict(self, valformat=str):
@@ -246,7 +285,7 @@ class Coord(Base, OdictMixin):
         doc="Error-circle radius associated with coordinate-position (degrees)"
     )
     time = Column(
-        sql.DateTime(timezone=True), nullable=False,
+        sql.DateTime(timezone=True), nullable=True,
         doc="Records timestamp associated with co-ordinate position of event"
     )
 
@@ -255,6 +294,14 @@ class Coord(Base, OdictMixin):
         """
         Load up the coords, if present, for initializing with the Voevent.
         """
+
+        acceptable_coord_systems = (
+            vp.definitions.sky_coord_system.utc_fk5_geo,
+            vp.definitions.sky_coord_system.utc_fk5_topo,
+            vp.definitions.sky_coord_system.utc_icrs_geo,
+            vp.definitions.sky_coord_system.utc_icrs_topo,
+        )
+
         position_list = []
         astrocoords = root.xpath(
             'WhereWhen/ObsDataLocation/ObservationLocation/AstroCoords'
@@ -262,7 +309,27 @@ class Coord(Base, OdictMixin):
         if astrocoords:
             for idx, entry in enumerate(astrocoords):
                 posn = vp.pull_astro_coords(root,idx)
-                isotime = vp.pull_isotime(root,idx)
+                if posn.system not in acceptable_coord_systems:
+                    raise NotImplementedError(
+                        "Loading position from coord-sys "
+                        "is not yet implemented: {} ".format(
+                            posn.system
+                        )
+                    )
+                if posn.units != 'deg':
+                    raise NotImplementedError(
+                        "Loading positions in formats other than degrees"
+                        "is not yet implemented."
+                    )
+                try:
+                    isotime = vp.pull_isotime(root,idx)
+                except:
+                    logger.warning(
+                        "Error pulling event time for ivorn {}, "
+                        "setting to NULL".format(root.attrib['ivorn'])
+                    )
+                    isotime = None
+
                 position_list.append(
                     Coord(ra = posn.ra,
                           decl = posn.dec,

@@ -6,6 +6,7 @@ from voeventdb.tests.resources import (
     swift_bat_grb_pos_v2_etree,
     swift_bat_grb_655721,
     swift_xrt_grb_655721,
+    konus_lc
 )
 import voeventdb.tests.fixtures.fake as fake
 import voeventparse as vp
@@ -110,7 +111,7 @@ class TestCiteInserts:
         assert backref_voevent.id == xcheck_voevent_id
         assert backref_voevent.ivorn == swift_xrt_grb_655721.attrib['ivorn']
 
-class TestCiteInserts:
+class TestCoordInserts:
     """
     Check that coords get inserted correctly
     """
@@ -157,3 +158,7 @@ class TestCiteInserts:
         s = fixture_db_session
         coord1 = s.query(Coord).one()
         assert coord1.voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']
+
+def test_bad_coord_rejection():
+    v = Voevent.from_etree(konus_lc)
+    assert v.coords == []
