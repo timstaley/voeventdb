@@ -3,10 +3,22 @@ python:
 - '2.7'
 virtualenv:
   system_site_packages: true
+
+sudo: required
+
+addons:
+
+addons:
+  postgresql: "9.3"
+  apt:
+    packages:
+    - postgresql-server-dev-9.3
+
 services:
 - postgresql
 
 before_install:
+  - sudo make -C external/q3c install
   - psql -c "\du" -U postgres | cat
   - psql -l | cat
   - psql -c "create database $USER;" -U postgres | cat

@@ -1,0 +1,3 @@
+[submodule "external/q3c"]
+	path = external/q3c
+	url = https://github.com/segasai/q3c.git
