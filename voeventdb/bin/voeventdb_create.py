@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import logging
+import subprocess
 
 from sqlalchemy.engine.url import make_url
 from sqlalchemy import create_engine
@@ -38,14 +39,14 @@ def handle_args():
 
 
 def main():
-
     args = handle_args()
     dburl = dbconfig.make_db_url(dbconfig.default_admin_db_params, args.dbname)
     if not db_utils.check_database_exists(dburl):
-        db_utils.create_database(dbconfig.default_admin_db_url, args.dbname)
-    engine = create_engine(dburl)
-    Base.metadata.create_all(engine)
+        db_utils.create_empty_database(dbconfig.default_admin_db_url,
+                                       args.dbname)
     logger.info('Database "{}" created.'.format(dburl.database))
+    engine = create_engine(dburl)
+    db_utils.create_tables_and_indexes(engine.connect())
     return 0
 
 

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_from_tarfile(session, tarfile_path, check_for_duplicates,
-                      pkts_per_commit=10000):
+                      pkts_per_commit=1000):
     """
     Iterate through xml files in a tarball and attempt to load into database.
 
@@ -28,7 +28,6 @@ def load_from_tarfile(session, tarfile_path, check_for_duplicates,
     n_parsed = 0
     n_loaded = 0
     for tarinf in tf_stream:
-
         try:
             v = vp.loads(tarinf.xml, check_version=False)
             if v.attrib['version'] != '2.0':
@@ -55,7 +54,6 @@ def load_from_tarfile(session, tarfile_path, check_for_duplicates,
                 'Error converting file {} to database row, skipping'.
                     format(tarinf.name))
             continue
-
 
         if n_loaded % pkts_per_commit == 0:
             session.commit()

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (backref, deferred, relationship,
                             )
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Index, func
 import sqlalchemy as sql
 import voeventparse as vp
 from datetime import datetime
@@ -289,6 +289,7 @@ class Coord(Base, OdictMixin):
         doc="Records timestamp associated with co-ordinate position of event"
     )
 
+
     @staticmethod
     def from_etree(root):
         """
@@ -337,3 +338,6 @@ class Coord(Base, OdictMixin):
                           time = isotime)
                 )
         return position_list
+
+# Q3C indexes for spatial queries:
+Index('q3c_coord_idx', func.q3c_ang2ipix(Coord.ra, Coord.decl))

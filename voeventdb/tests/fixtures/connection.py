@@ -39,12 +39,12 @@ def empty_db_connection(request):
     # test_db_url = getattr(request.module, "test_db_url", testdb_empty_url)
     test_db_url = testdb_empty_url
     if not db_utils.check_database_exists(test_db_url):
-        db_utils.create_database(default_admin_db_url, test_db_url.database)
+        db_utils.create_empty_database(default_admin_db_url, test_db_url.database)
     engine = create_engine(test_db_url)
     connection = engine.connect()
     transaction = connection.begin()
     # Create tables (will be rolled back to clean)
-    Base.metadata.create_all(connection)
+    db_utils.create_tables_and_indexes(connection)
     # Return to test function
     yield connection
     # TearDown

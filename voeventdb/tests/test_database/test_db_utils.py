@@ -14,7 +14,7 @@ class TestDBCreateCheckDestroy:
         # DB should be absent to start off with
         assert db_utils.check_database_exists(testdb_temp_url) == False
         # Now create it
-        db_utils.create_database(default_admin_db_url, testdb_temp_url.database)
+        db_utils.create_empty_database(default_admin_db_url, testdb_temp_url.database)
         assert db_utils.check_database_exists(testdb_temp_url) == True
         # And delete it again
         db_utils.delete_database(default_admin_db_url, testdb_temp_url.database)

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 import getpass
+import os
+import subprocess
 
 from sqlalchemy.engine.url import URL
 
@@ -25,6 +27,17 @@ def make_testdb_url(dbsuffix):
     dbprefix = '_voecache_test_'
     dbname = dbprefix + dbsuffix
     return make_db_url(default_admin_db_params, dbname)
+
+
+pg_sharedir = subprocess.check_output(['pg_config', '--sharedir']).strip()
+q3c_batchfile = os.path.join(pg_sharedir, 'contrib', 'q3c.sql')
+
+with open(q3c_batchfile) as f:
+    _q3c_batch_raw = f.readlines()
+    # We do our own transaction management,
+    # so we ditch the 'BEGIN' and 'END' statements from q3c.sql
+    q3c_batch = ''.join(_q3c_batch_raw[2:-2])
+
 
 testdb_temp_url = make_testdb_url('temp')
 testdb_empty_url = make_testdb_url('empty')

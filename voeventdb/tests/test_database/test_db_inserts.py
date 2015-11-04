@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from voeventdb.database.models import Voevent, Cite, Coord
@@ -21,6 +22,10 @@ def test_empty_table_present(fixture_db_session):
     s = fixture_db_session
     results = s.query(Voevent).all()
     assert results == []
+
+    #Check q3c functions loaded
+    q3c_version = s.query(func.q3c_version()).all()
+    # print q3c_version
 
 
 class TestBasicInsert:
