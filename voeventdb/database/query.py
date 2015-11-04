@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from voeventdb.database.models import Voevent, Cite
+from voeventdb.database.models import Voevent, Cite, Coord
 from sqlalchemy import func, exists
 from sqlalchemy.orm import aliased
 
@@ -13,6 +13,12 @@ def authored_month_counts_q(session):
     ).select_from(Voevent).group_by('month_id')
     return month_counts_qry
 
+def cone_search_clause(ra, dec, radius):
+    cone_search = func.q3c_radial_query(
+                Coord.ra, Coord.decl,
+                ra, dec, radius
+            )
+    return cone_search
 
 def ivorn_cites_to_others_count_q(session):
     cites_to_others_count_qry = session.query(
