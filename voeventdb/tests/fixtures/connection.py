@@ -1,12 +1,14 @@
 from __future__ import absolute_import
+from datetime import timedelta
+
 from sqlalchemy import create_engine
+import pytest
+
 import voeventparse as vp
-from voeventdb.tests.config import admin_db_url, testdb_empty_url
+from voeventdb.database.config import default_admin_db_url, testdb_empty_url
 from voeventdb.database import db_utils, session_registry, session_factory
 from voeventdb.database.models import Base, Voevent
 import voeventdb.tests.fixtures.fake as fake
-from datetime import timedelta
-import pytest
 
 
 # Would like to use 'session' scoped fixture - i.e. create once for all
@@ -37,7 +39,7 @@ def empty_db_connection(request):
     # test_db_url = getattr(request.module, "test_db_url", testdb_empty_url)
     test_db_url = testdb_empty_url
     if not db_utils.check_database_exists(test_db_url):
-        db_utils.create_database(admin_db_url, test_db_url.database)
+        db_utils.create_database(default_admin_db_url, test_db_url.database)
     engine = create_engine(test_db_url)
     connection = engine.connect()
     transaction = connection.begin()

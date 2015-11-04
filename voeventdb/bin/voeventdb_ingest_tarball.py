@@ -7,11 +7,10 @@ import logging
 
 from sqlalchemy.engine.url import make_url
 from sqlalchemy import create_engine
-
 from sqlalchemy.orm import Session
 
 from voeventdb.database import ingest, db_utils
-from voeventdb.tests.config import testdb_corpus_url
+import voeventdb.database.config as dbconfig
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('iso8601').setLevel(
@@ -38,18 +37,18 @@ def handle_args():
     Default values are defined here.
     """
 
-    default_database_url = testdb_corpus_url
-    parser = argparse.ArgumentParser(prog=os.path.basename(__file__))
+    default_database_name = dbconfig.testdb_corpus_url.database
+    parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter, )
     parser.add_argument('tarfile',
                         nargs='?',
                         type=filepath_arg,
                         help='Top level folder to scan for XML files')
 
-    parser.add_argument('-d', '--database_url', nargs='?',
-                        type=make_url,
-                        default=str(default_database_url),
-                        help='Database url \n'
-                             ' (default="{}"'.format(default_database_url))
+    parser.add_argument('-d', '--dbname', nargs='?',
+                        default=str(default_database_name),
+                        help='Database name')
 
     parser.add_argument('-c', '--check', action='store_true',
                         help="Check for (and ignore) duplicate packets.")
@@ -58,15 +57,16 @@ def handle_args():
 
 def main():
     args = handle_args()
-    if not db_utils.check_database_exists(args.database_url):
+    dburl = dbconfig.make_db_url(dbconfig.default_admin_db_params, args.dbname)
+    if not db_utils.check_database_exists(dburl):
         raise RuntimeError("Database not found")
 
-    session = Session(bind=create_engine(args.database_url))
+    session = Session(bind=create_engine(dburl))
     n_parsed, n_loaded = ingest.load_from_tarfile(session,
                                                   tarfile_path=args.tarfile,
                                                   check_for_duplicates=args.check)
     session.close()
-    logger.info("Loaded {} packets into {}".format(n_loaded, args.database_url))
+    logger.info("Loaded {} packets into {}".format(n_loaded, args.dbname))
     return 0
 
 

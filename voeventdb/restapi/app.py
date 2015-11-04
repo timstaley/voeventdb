@@ -3,14 +3,13 @@
 Initialize the Flask app.
 """
 from __future__ import absolute_import
-from voeventdb.database import session_registry
-import voeventdb.restapi.v0
-from voeventdb.restapi.v0.views import apiv0
-from voeventdb.restapi.v0.apierror import (IvornNotFound, IvornNotSupplied)
-from voeventdb.tests.config import testdb_scratch_url, testdb_corpus_url
 
 from sqlalchemy import engine
-from flask import Flask, render_template, url_for, send_from_directory, request
+from flask import Flask, send_from_directory
+
+from voeventdb.database import session_registry
+from voeventdb.restapi.v0.views import apiv0
+from voeventdb.database.config import testdb_corpus_url
 
 app = Flask(__name__)
 app.config.from_object('voeventdb.restapi.default_config')

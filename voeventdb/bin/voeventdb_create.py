@@ -9,7 +9,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy import create_engine
 
 from voeventdb.database import db_utils
-from voeventdb.tests.config import testdb_corpus_url, admin_db_url
+import voeventdb.database.config as dbconfig
 from voeventdb.database.models import Base
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,31 +19,35 @@ logger = logging.getLogger("create_db")
 def database_url(s):
     return make_url(s)
 
+
 def handle_args():
     """
     Default values are defined here.
     """
-    default_database_url = testdb_corpus_url
-    parser = argparse.ArgumentParser(prog=os.path.basename(__file__))
+    default_database_name = dbconfig.testdb_corpus_url.database
+    parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('database_url',
-                    nargs='?',
-                    type=database_url,
-                    default=str(default_database_url),
-                    help='Database url \n (default="{}"'.format(default_database_url)
-                    )
+    parser.add_argument('dbname',
+                        nargs='?',
+                        default=str(default_database_name),
+                        help='Database name',
+                        )
     return parser.parse_args()
 
+
 def main():
+
     args = handle_args()
-    dburl = args.database_url
+    dburl = dbconfig.make_db_url(dbconfig.default_admin_db_params, args.dbname)
     if not db_utils.check_database_exists(dburl):
-        db_utils.create_database(admin_db_url, dburl.database)
+        db_utils.create_database(dbconfig.default_admin_db_url, args.dbname)
     engine = create_engine(dburl)
     Base.metadata.create_all(engine)
     logger.info('Database "{}" created.'.format(dburl.database))
     return 0
-    
+
 
 if __name__ == '__main__':
     sys.exit(main())
