@@ -30,11 +30,11 @@ class TestWithEmptyDatabase:
         assert rd[ResultKeys.result] == 0
 
     def test_no_ivorn(self):
-        rv = self.c.get(url_for(apiv0.name+'.get_xml'))
+        rv = self.c.get(url_for(apiv0.name+'.view_xml'))
         assert rv.status_code == 400
 
     def test_ivorn_not_found(self):
-        rv = self.c.get(url_for(apiv0.name+'.get_xml') +
+        rv = self.c.get(url_for(apiv0.name+'.view_xml') +
                         urllib.quote_plus('foobar_invalid_ivorn'))
         assert rv.status_code == 422
 
@@ -154,14 +154,14 @@ class TestWithSimpleDatabase:
             assert bool(citecount) == (ivorn in simple_populated_db.cited)
 
     def test_xml_retrieval(self, simple_populated_db):
-        url = url_for(apiv0.name+'.get_xml')
+        url = url_for(apiv0.name+'.view_xml')
         url += urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         present_ivorn = simple_populated_db.inserted_ivorns[0]
         present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
-        url = url_for(apiv0.name+'.get_xml')
+        url = url_for(apiv0.name+'.view_xml')
         url += urllib.quote_plus(present_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
@@ -169,9 +169,9 @@ class TestWithSimpleDatabase:
         assert rv.data == present_ivorn_xml_content
 
 
-    def test_ref_retrieval(self, simple_populated_db):
+    def test_details_view(self, simple_populated_db):
         #Null case, ivorn not in DB:
-        ep_url = url_for(apiv0.name+'.get_cites')
+        ep_url = url_for(apiv0.name+'.view_full')
         url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
@@ -182,9 +182,9 @@ class TestWithSimpleDatabase:
         rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
-        refs = rd[ResultKeys.result]
+        full = rd[ResultKeys.result]
         etree = simple_populated_db.packet_dict[ivorn_w_refs]
-        assert len(refs) == len(Cite.from_etree(etree))
+        assert len(full['refs']) == len(Cite.from_etree(etree))
 
         # Negative case, IVORN present but packet contains no references
         all_ivorns = set(simple_populated_db.packet_dict.keys())
@@ -194,8 +194,8 @@ class TestWithSimpleDatabase:
         rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
-        refs = rd[ResultKeys.result]
-        assert len(refs) == 0
+        full = rd[ResultKeys.result]
+        assert len(full['refs']) == 0
 
 
 

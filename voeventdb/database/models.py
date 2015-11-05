@@ -59,11 +59,14 @@ def _has_bad_coords(root, stream):
 
 
 class OdictMixin(object):
-    def to_odict(self):
+    def to_odict(self, exclude=None):
         """
         Returns an OrderedDict representation of the SQLalchemy table row.
         """
-        colnames = [c.name for c in self.__table__.columns]
+        if exclude is None:
+            exclude = tuple()
+        colnames = [c.name for c in self.__table__.columns
+                    if c.name not in exclude]
         return OrderedDict(((col, getattr(self, col)) for col in colnames))
 
 

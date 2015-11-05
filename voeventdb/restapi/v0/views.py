@@ -8,7 +8,7 @@ from flask import (
 import urllib
 
 from voeventdb.database import session_registry as db_session
-from voeventdb.database.models import Voevent, Cite
+from voeventdb.database.models import Voevent, Cite, Coord
 import voeventdb.database.convenience as convenience
 import voeventdb.restapi.v0.apierror as apierror
 import voeventdb.database.query as query
@@ -19,8 +19,6 @@ from voeventdb.restapi.v0.viewbase import (
 # This import may look unused, but activates the filter registry -
 # Do not delete!
 import voeventdb.restapi.v0.filters
-
-
 
 apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
@@ -34,8 +32,8 @@ def add_to_apiv0(queryview_class):
 
 
 def get_apiv0_rules():
-    rules =  [r for r in sorted(current_app.url_map.iter_rules())
-            if r.endpoint.startswith('apiv0')]
+    rules = [r for r in sorted(current_app.url_map.iter_rules())
+             if r.endpoint.startswith('apiv0')]
     endpoints_listed = set()
     pruned_rules = []
     for r in rules:
@@ -54,12 +52,13 @@ def landing_pages():
                                       'http://' + request.host + '/docs')
     message = "Welcome to the voeventdb REST API!"
     return render_template('landing.html',
-                           message = message,
+                           message=message,
                            version=apiv0.name,
                            rules=get_apiv0_rules(),
                            docs_url=docs_url,
 
                            )
+
 
 @apiv0.errorhandler(apierror.InvalidQueryString)
 @apiv0.errorhandler(apierror.IvornNotFound)
@@ -163,6 +162,7 @@ class IvornReferenceCount(ListQueryView):
     def get_query(self):
         return query.ivorn_cites_to_others_count_q(db_session)
 
+
 @add_to_apiv0
 class IvornCitedFromCount(ListQueryView):
     """
@@ -225,17 +225,7 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
-
-@apiv0.route('/refs/')
-@apiv0.route('/refs/<path:url_encoded_ivorn>')
-def get_cites(url_encoded_ivorn=None):
-    """
-    Result (list of 3-element lists):
-        ``[[ref_ivorn, cite_type, description], ...]``
-
-    Returns the reference list for the packet specified by IVORN.
-
-    """
+def validate_ivorn(url_encoded_ivorn):
     if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
         ivorn = urllib.unquote(url_encoded_ivorn)
     else:
@@ -244,19 +234,64 @@ def get_cites(url_encoded_ivorn=None):
         raise apierror.IvornNotSupplied
     if not convenience.ivorn_present(db_session, ivorn):
         raise apierror.IvornNotFound(ivorn)
-
-    cites = db_session.query(
-                Cite.ref_ivorn, Cite.cite_type, Cite.description).\
-            join(Voevent, Cite.voevent_id == Voevent.id).\
-            filter(Voevent.ivorn == ivorn).all()
-    return jsonify(make_response_dict(cites))
+    return ivorn
 
 
+@apiv0.route('/full/')
+@apiv0.route('/full/<path:url_encoded_ivorn>')
+def view_full(url_encoded_ivorn=None):
+    """
+    Result (nested dict):
+        ``{
+            'coords': [ {'posn': (ra,dec),
+                         'error': error_radius},
+                          ...
+                      ],
+             'refs' : [ {'ref_ivorn': "...",
+                        'cite_type':"...",
+                        'description': "..."},
+                        ...
+                      ],
+            'voevent': {
+                        'author_datetime': ...,
+                        'author_ivorn':'...',
+                        'ivorn':'...',
+                        'stream': '...',
+                        'received': ...,
+                        'role' : '...',
+                        },
+          }
+        ``
+
+    Returns the reference list for the packet specified by IVORN.
+
+    """
+    ivorn = validate_ivorn(url_encoded_ivorn)
+
+    voevent_row = db_session.query(Voevent).filter(
+        Voevent.ivorn == ivorn).one()
+
+    cites = db_session.query(Cite).\
+            filter(Cite.voevent_id == voevent_row.id).all()
+    coords = db_session.query(Coord).\
+        filter(Coord.voevent_id == voevent_row.id).all()
+
+    v_dict = voevent_row.to_odict(exclude=('id','xml'))
+
+    cite_list = [c.to_odict(exclude=('id','voevent_id')) for c in cites]
+    coord_list = [c.to_odict(exclude=('id','voevent_id')) for c in coords]
+
+    result = {'voevent': v_dict,
+              'refs': cite_list,
+              'coords': coord_list,
+              }
+
+    return jsonify(make_response_dict(result))
 
 
 @apiv0.route('/xml/')
 @apiv0.route('/xml/<path:url_encoded_ivorn>')
-def get_xml(url_encoded_ivorn=None):
+def view_xml(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
     """
@@ -268,18 +303,10 @@ def get_xml(url_encoded_ivorn=None):
     # However, the werkzeug simple-server decodes these by default,
     # resulting in differing dev / production behaviour, which we handle here.
 
-    if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
-        ivorn = urllib.unquote(url_encoded_ivorn)
-    else:
-        ivorn = url_encoded_ivorn
-    if ivorn is None:
-        raise apierror.IvornNotSupplied
+    ivorn = validate_ivorn(url_encoded_ivorn)
     xml = db_session.query(Voevent.xml).filter(
         Voevent.ivorn == ivorn
     ).scalar()
-    if xml:
-        r = make_response(xml)
-        r.mimetype = 'text/xml'
-        return r
-    else:
-        raise apierror.IvornNotFound(ivorn)
+    r = make_response(xml)
+    r.mimetype = 'text/xml'
+    return r

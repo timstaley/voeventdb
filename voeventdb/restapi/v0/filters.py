@@ -56,9 +56,9 @@ class CiteAny(QueryFilter):
     """
     Return only VOEvents which have / do not have citations to other VOEvents.
 
-    Applied via query-strings ``has_citations=true`` or ``has_citations=false``
+    Applied via query-strings ``cites_any=true`` or ``cites_any=false``
     """
-    querystring_key = 'cite_any'
+    querystring_key = 'cites_any'
     example_values = ['true',
                       'false'
                       ]
@@ -102,7 +102,7 @@ class CiteExact(QueryFilter):
     Return only VOEvents which cite the given (url-encoded) IVORN.
 
     """
-    querystring_key = 'cite_exact'
+    querystring_key = 'cites_exact'
     example_values = [
         urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
         urllib.quote_plus(
