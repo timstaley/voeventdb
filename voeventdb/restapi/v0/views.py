@@ -60,24 +60,42 @@ def landing_pages():
                            )
 
 
+def error_to_dict(error):
+    return {
+        'error':{
+            'code':error.code,
+            'description': error.description,
+            'message': error.message.replace('\n','').strip()
+        }
+    }
+
+
 @apiv0.errorhandler(apierror.InvalidQueryString)
 @apiv0.errorhandler(apierror.IvornNotFound)
 @apiv0.errorhandler(apierror.IvornNotSupplied)
 def ivorn_error(error):
-    return render_template('errorbase.html',
-                           error=error
-                           ), error.code
+    if 'text/html' in request.headers.get("Accept", ""):
+        return render_template('errorbase.html',
+                               error=error
+                               ), error.code
+    else:
+        return jsonify(error_to_dict(error)), error.code
+
 
 
 @apiv0.app_errorhandler(404)
 def page_not_found(abort_error):
-    docs_url = current_app.config.get('DOCS_URL',
-                                      'http://' + request.host + '/docs')
-    return render_template('404.html',
-                           rules=get_apiv0_rules(),
-                           docs_url=docs_url,
-                           error=abort_error
-                           ), abort_error.code
+    if 'text/html' in request.headers.get("Accept", ""):
+        docs_url = current_app.config.get('DOCS_URL',
+                                          'http://' + request.host + '/docs')
+        return render_template('404.html',
+                               rules=get_apiv0_rules(),
+                               docs_url=docs_url,
+                               error=abort_error
+                               ), abort_error.code
+    else:
+
+        return jsonify(error_to_dict(abort_error)), abort_error.code
 
 
 @add_to_apiv0

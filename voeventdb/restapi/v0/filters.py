@@ -54,34 +54,13 @@ class AuthoredUntil(QueryFilter):
 
 
 @add_to_filter_registry
-class CiteAny(QueryFilter):
-    """
-    Return only VOEvents which have / do not have citations to other VOEvents.
-
-    Applied via query-strings ``cites_any=true`` or ``cites_any=false``
-    """
-    querystring_key = 'cites_any'
-    example_values = ['true',
-                      'false'
-                      ]
-
-    def filter(self, filter_value):
-        filter_q = Voevent.cites.any()
-        if filter_value.lower() == 'true':
-            return filter_q
-        elif filter_value.lower() == 'false':
-            return ~filter_q
-        else:
-            raise apierror.InvalidQueryString(self.querystring_key,
-                                              filter_value)
-
-
-@add_to_filter_registry
 class CitedByAny(QueryFilter):
     """
     Return only VOEvents which are cited by another VOEvent in the database.
+
+    Applied via query-strings ``cited=true`` or ``cited=false``
     """
-    querystring_key = 'cited_by_any'
+    querystring_key = 'cited'
     example_values = ['true',
                       'false'
                       ]
@@ -96,49 +75,6 @@ class CitedByAny(QueryFilter):
         else:
             raise apierror.InvalidQueryString(self.querystring_key,
                                               filter_value)
-
-
-@add_to_filter_registry
-class CiteContains(QueryFilter):
-    """
-    Return only VOEvents which cite an IVORN containing the given substring.
-
-    """
-    querystring_key = 'cite_contains'
-    example_values = [
-        urllib.quote_plus('BAT_GRB_Pos'),
-        urllib.quote_plus('GBM_Alert'),
-    ]
-
-    def filter(self, filter_value):
-        return Voevent.cites.any(
-            Cite.ref_ivorn.like('%{}%'.format(filter_value))
-        )
-
-    def combinator(self, filters):
-        """OR"""
-        return or_(filters)
-
-
-@add_to_filter_registry
-class CiteExact(QueryFilter):
-    """
-    Return only VOEvents which cite the given (url-encoded) IVORN.
-
-    """
-    querystring_key = 'cites_exact'
-    example_values = [
-        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
-        urllib.quote_plus(
-            'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
-    ]
-
-    def filter(self, filter_value):
-        return Voevent.cites.any(Cite.ref_ivorn == filter_value)
-
-    def combinator(self, filters):
-        """OR"""
-        return or_(filters)
 
 
 @add_to_filter_registry
@@ -158,18 +94,42 @@ class ConeSearch(QueryFilter):
         '[10,20,5]',
         '[-30,359.9,5]'
     ]
-    simplejoin_tables = [Coord,]
+    simplejoin_tables = [Coord, ]
+
     def filter(self, filter_value):
         try:
             ra, dec, radius = json.loads(filter_value)
         except:
             raise apierror.InvalidQueryString(self.querystring_key,
                                               filter_value)
-        if  dec < -90.0 or dec > 90.0:
+        if dec < -90.0 or dec > 90.0:
             raise apierror.InvalidQueryString(self.querystring_key,
                                               filter_value,
                                               reason="invalid declination value")
         return coord_cone_search_clause(ra, dec, radius)
+
+@add_to_filter_registry
+class CoordsAny(QueryFilter):
+    """
+    Return only VOEvents which have / do not have associated co-ord positions.
+
+    Applied via query-strings ``coords=true`` or ``coords=false``
+    """
+    querystring_key = 'coord'
+    example_values = ['true',
+                      'false'
+                      ]
+
+    def filter(self, filter_value):
+        filter_q = Voevent.coords.any()
+        if filter_value.lower() == 'true':
+            return filter_q
+        elif filter_value.lower() == 'false':
+            return ~filter_q
+        else:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value)
+
 
 @add_to_filter_registry
 class IvornContains(QueryFilter):
@@ -207,6 +167,71 @@ class IvornPrefix(QueryFilter):
 
     def filter(self, filter_value):
         return Voevent.ivorn.like('{}%'.format(filter_value))
+
+    def combinator(self, filters):
+        """OR"""
+        return or_(filters)
+
+
+@add_to_filter_registry
+class RefAny(QueryFilter):
+    """
+    Return only VOEvents which have / do not have references to other VOEvents.
+
+    Applied via query-strings ``refs=true`` or ``refs=false``
+    """
+    querystring_key = 'ref'
+    example_values = ['true',
+                      'false'
+                      ]
+
+    def filter(self, filter_value):
+        filter_q = Voevent.cites.any()
+        if filter_value.lower() == 'true':
+            return filter_q
+        elif filter_value.lower() == 'false':
+            return ~filter_q
+        else:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value)
+
+
+@add_to_filter_registry
+class RefContains(QueryFilter):
+    """
+    Return VOEvents which reference an IVORN containing the given substring.
+    """
+    querystring_key = 'ref_contains'
+    example_values = [
+        urllib.quote_plus('BAT_GRB_Pos'),
+        urllib.quote_plus('GBM_Alert'),
+    ]
+
+    def filter(self, filter_value):
+        return Voevent.cites.any(
+            Cite.ref_ivorn.like('%{}%'.format(filter_value))
+        )
+
+    def combinator(self, filters):
+        """OR"""
+        return or_(filters)
+
+
+@add_to_filter_registry
+class RefExact(QueryFilter):
+    """
+    Return only VOEvents which contain a ref to the given (url-encoded) IVORN.
+
+    """
+    querystring_key = 'ref_exact'
+    example_values = [
+        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
+        urllib.quote_plus(
+            'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
+    ]
+
+    def filter(self, filter_value):
+        return Voevent.cites.any(Cite.ref_ivorn == filter_value)
 
     def combinator(self, filters):
         """OR"""
