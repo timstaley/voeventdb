@@ -153,15 +153,16 @@ class IvornPrefix(QueryFilter):
     """
     Return only VOEvents where the IVORN begins with the given value.
 
-    Note that the value passed should always be URL-encoded, e.g.::
+    Note that the value passed should be URL-encoded if it contains
+    the ``#`` character e.g.::
 
-        urllib.quote_plus('ivo://nasa.gsfc.gcn')
+        urllib.quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
 
 
     """
     querystring_key = 'prefix'
     example_values = [
-        urllib.quote_plus('ivo://nasa.gsfc.gcn'),
+        'ivo://nasa.gsfc.gcn',
         urllib.quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
     ]
 

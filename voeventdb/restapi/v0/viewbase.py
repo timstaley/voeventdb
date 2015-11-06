@@ -22,23 +22,22 @@ class PaginationKeys:
 
     Note that if no values are supplied, a default limit value is applied.
     (You can still check what it was, by inspecting the relevant value in the
-    result-dict.)
-
-    The key-strings are exactly what you'd expect, but are documented here
-    for completeness:
+    :ref:`result-dict <returned-content>`.)
     """
+    # These hardly need soft-defining, but we include them for completeness.
     limit = 'limit'
     offset = 'offset'
 
 
 class ResultKeys:
     """
-    Most :ref:`endpoints` return a JSON-encoded dictionary.
-
-    (Exceptions are special endpoints like the XML-request.)
+    Most :ref:`endpoints <endpoints>` return a JSON-encoded dictionary.
+    [#ApartFromXml]_
 
     At the top level, the dictionary will contain some or all of the following
     keys:
+
+    .. [#ApartFromXml] (The exception is the XML-retrieval endpoint, obviously.)
 
     .. note::
         The key-strings can be imported and used in autocomplete-friendly
@@ -69,6 +68,8 @@ class ResultKeys:
     """
     The data returned by your query, either in dictionary
     or list format according to the endpoint.
+
+    See :ref:`endpoint listings <endpoints>` for detail.
     """
 
     url = 'url'

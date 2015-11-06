@@ -143,7 +143,7 @@ class TestWithSimpleDatabase:
 
     def test_cited_counts(self, simple_populated_db):
         with self.c as c:
-            url = url_for(apiv0.name + '.' + views.IvornCitedFromCount.view_name)
+            url = url_for(apiv0.name + '.' + views.IvornCitedCount.view_name)
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)

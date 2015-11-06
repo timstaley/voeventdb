@@ -51,13 +51,19 @@ def landing_pages():
     docs_url = current_app.config.get('DOCS_URL',
                                       'http://' + request.host + '/docs')
     message = "Welcome to the voeventdb REST API!"
-    return render_template('landing.html',
-                           message=message,
-                           version=apiv0.name,
-                           rules=get_apiv0_rules(),
-                           docs_url=docs_url,
+    api_details = {
+        'message':message,
+        'version': apiv0.name,
+        'endpoints' : [str(r) for r in get_apiv0_rules()],
+        'docs_url' : docs_url
+    }
 
-                           )
+    if 'text/html' in request.headers.get("Accept", ""):
+        return render_template('landing.html',
+                               **api_details
+                               )
+    else:
+        return jsonify(api_details)
 
 
 def error_to_dict(error):
@@ -191,10 +197,10 @@ class IvornReferenceCount(ListQueryView):
 
 
 @add_to_apiv0
-class IvornCitedFromCount(ListQueryView):
+class IvornCitedCount(ListQueryView):
     """
     Result (list of 2-element lists):
-        ``[(ivorn, n_cited), ...]``
+        ``[[ivorn, n_cited], ...]``
 
     Get rows containing citation counts. Row entries are:
 
@@ -271,8 +277,9 @@ def validate_ivorn(url_encoded_ivorn):
 @apiv0.route('/full/<path:url_encoded_ivorn>')
 def view_full(url_encoded_ivorn=None):
     """
-    Result (nested dict):
-        ``{
+    Result (nested dict)::
+
+        {
             'coords': [ {'posn': (ra,dec),
                          'error': error_radius},
                           ...
@@ -291,9 +298,12 @@ def view_full(url_encoded_ivorn=None):
                         'role' : '...',
                         },
           }
-        ``
 
-    Returns the reference list for the packet specified by IVORN.
+
+    Returns all details for the packet specified by IVORN.
+
+    The required IVORN should be appended to the URL after ``/full/``
+    in :ref:`URL-encoded <url-encoding>` form.
 
     """
     ivorn = validate_ivorn(url_encoded_ivorn)
@@ -324,6 +334,9 @@ def view_full(url_encoded_ivorn=None):
 def view_xml(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
+
+    The required IVORN should be appended to the URL after ``/xml/``
+    in :ref:`URL-encoded <url-encoding>` form.
     """
     # Handle Apache / Debug server difference...
     # Apache conf must include the setting::
