@@ -9,6 +9,7 @@ install_requires = [
     'psycopg2',
     'pytz',
     'SQLAlchemy',
+    'simplejson',
     'voevent-parse>=0.9',
 ]
 

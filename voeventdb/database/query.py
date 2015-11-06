@@ -13,9 +13,9 @@ def authored_month_counts_q(session):
     ).select_from(Voevent).group_by('month_id')
     return month_counts_qry
 
-def cone_search_clause(ra, dec, radius):
+def coord_cone_search_clause(ra, dec, radius):
     cone_search = func.q3c_radial_query(
-                Coord.ra, Coord.decl,
+                Coord.ra, Coord.dec,
                 ra, dec, radius
             )
     return cone_search

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from voeventdb.database.models import Voevent, Cite
+from voeventdb.database.models import Voevent, Cite, Coord
+from voeventdb.database.query import coord_cone_search_clause
 import voeventdb.restapi.v0.apierror as apierror
 from voeventdb.restapi.v0.filter_base import (
     add_to_filter_registry, QueryFilter)
@@ -8,6 +9,7 @@ from sqlalchemy import (or_, and_, exists,
                         )
 from sqlalchemy.orm import aliased
 import urllib
+from flask import json
 
 
 @add_to_filter_registry
@@ -97,47 +99,6 @@ class CitedByAny(QueryFilter):
 
 
 @add_to_filter_registry
-class CiteExact(QueryFilter):
-    """
-    Return only VOEvents which cite the given (url-encoded) IVORN.
-
-    """
-    querystring_key = 'cites_exact'
-    example_values = [
-        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
-        urllib.quote_plus(
-            'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
-    ]
-
-    def filter(self, filter_value):
-        return Voevent.cites.any(Cite.ref_ivorn == filter_value)
-
-    def combinator(self, filters):
-        """OR"""
-        return or_(filters)
-
-# @add_to_filter_registry
-# class CitedByExact(QueryFilter):
-#     """
-#     Return only VOEvents which are cited from another VOEvent with given IVORN.
-#     """
-#     querystring_key = 'cited_by_exact'
-#     example_values = [
-#         urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
-#         urllib.quote_plus(
-#             'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
-#     ]
-#
-#     def filter(self, filter_value):
-#         citing_refs = aliased(Cite)
-#         citing_voevent = aliased(Voevent)
-#         return and_( citing_refs.ref_ivorn == Voevent.ivorn,
-#                      citing_refs.voevent_id == citing_voevent.id,
-#                      citing_voevent.ivorn == filter_value
-#                      )
-
-
-@add_to_filter_registry
 class CiteContains(QueryFilter):
     """
     Return only VOEvents which cite an IVORN containing the given substring.
@@ -158,6 +119,57 @@ class CiteContains(QueryFilter):
         """OR"""
         return or_(filters)
 
+
+@add_to_filter_registry
+class CiteExact(QueryFilter):
+    """
+    Return only VOEvents which cite the given (url-encoded) IVORN.
+
+    """
+    querystring_key = 'cites_exact'
+    example_values = [
+        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
+        urllib.quote_plus(
+            'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
+    ]
+
+    def filter(self, filter_value):
+        return Voevent.cites.any(Cite.ref_ivorn == filter_value)
+
+    def combinator(self, filters):
+        """OR"""
+        return or_(filters)
+
+
+@add_to_filter_registry
+class ConeSearch(QueryFilter):
+    """
+    Return only VOEvents with co-ords in the given cone.
+
+    Cone specified as a 3-element list in JSON format::
+
+        [ra,dec,radius]
+
+    (values in decimal degrees).
+
+    """
+    querystring_key = 'cone'
+    example_values = [
+        '[10,20,5]',
+        '[-30,359.9,5]'
+    ]
+    simplejoin_tables = [Coord,]
+    def filter(self, filter_value):
+        try:
+            ra, dec, radius = json.loads(filter_value)
+        except:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value)
+        if  dec < -90.0 or dec > 90.0:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                              filter_value,
+                                              reason="invalid declination value")
+        return coord_cone_search_clause(ra, dec, radius)
 
 @add_to_filter_registry
 class IvornContains(QueryFilter):

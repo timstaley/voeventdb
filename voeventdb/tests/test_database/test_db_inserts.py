@@ -9,7 +9,7 @@ from voeventdb.tests.resources import (
     swift_xrt_grb_655721,
     konus_lc
 )
-from voeventdb.database.query import cone_search_clause
+from voeventdb.database.query import coord_cone_search_clause
 import voeventdb.tests.fixtures.fake as fake
 import voeventparse as vp
 
@@ -155,7 +155,7 @@ class TestCoordInserts:
         assert coord0.voevent_id == bat_voevent_id
         position = vp.pull_astro_coords(swift_bat_grb_655721)
         assert coord0.ra == position.ra
-        assert coord0.decl == position.dec
+        assert coord0.dec == position.dec
         assert coord0.error == position.err
 
     def test_backref_query(self, fixture_db_session):
@@ -170,11 +170,11 @@ class TestCoordInserts:
         posn = vp.pull_astro_coords(swift_bat_grb_655721)
         #Cone search centred on the known co-ords should return the row:
         results = s.query(Coord).filter(
-            cone_search_clause(posn.ra, posn.dec,0.5)).all()
+            coord_cone_search_clause(posn.ra, posn.dec,0.5)).all()
         assert len(results) == 1
         #Now bump the cone to the side (so not matching) and check null return
         results = s.query(Coord).filter(
-            cone_search_clause(posn.ra, posn.dec+1.0,0.5)).all()
+            coord_cone_search_clause(posn.ra, posn.dec+1.0,0.5)).all()
         assert len(results) == 0
 
 def test_bad_coord_rejection():

@@ -36,6 +36,7 @@ class QueryFilter(object):
     """
     querystring_key = None
     example_values = None
+    simplejoin_tables = None
 
     def combinator(self, filters):
         """
@@ -59,7 +60,11 @@ class QueryFilter(object):
         )
 
     def apply_filter(self, query, args):
-        return query.filter(self.generate_filter_set(args))
+        if self.simplejoin_tables:
+            for tbl in self.simplejoin_tables:
+                query = query.join(tbl)
+        query = query.filter(self.generate_filter_set(args))
+        return query
 
 def apply_filters(query, args):
     """

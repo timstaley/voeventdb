@@ -143,7 +143,11 @@ class IvornList(ListQueryView):
         """
         Grab the first entry from every tuple as a single list.
         """
-        return zip(*query.all())[0]
+        raw_results = query.all()
+        if len(raw_results):
+            return zip(*raw_results)[0]
+        else:
+            return raw_results
 
 
 @add_to_apiv0
@@ -162,6 +166,11 @@ class IvornReferenceCount(ListQueryView):
     def get_query(self):
         return query.ivorn_cites_to_others_count_q(db_session)
 
+    def process_query(self, query):
+        return [ tuple(r) for r in query.all()]
+
+
+
 
 @add_to_apiv0
 class IvornCitedFromCount(ListQueryView):
@@ -178,6 +187,9 @@ class IvornCitedFromCount(ListQueryView):
 
     def get_query(self):
         return query.ivorn_cited_from_others_count_q(db_session)
+
+    def process_query(self, query):
+        return [ tuple(r) for r in query.all()]
 
 
 @add_to_apiv0

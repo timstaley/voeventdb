@@ -4,12 +4,14 @@ from flask import url_for
 class InvalidQueryString(Exception):
     code = 400
     description = "Invalid query-string"
-    def __init__(self, querystring_key, querystring_value):
+    def __init__(self, querystring_key, querystring_value, reason=None):
         Exception.__init__(self)
         self.message = """
             Error parsing query-string - could not parse this section:
-            "{0}={1}"
+            "{0}={1}"\n
             """.format(querystring_key, querystring_value)
+        if reason:
+            self.message+= " - " + reason
 
 class IvornNotFound(Exception):
     code = 422

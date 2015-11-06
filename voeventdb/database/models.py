@@ -282,7 +282,7 @@ class Coord(Base, OdictMixin):
     id = Column(sql.Integer, primary_key=True)
     voevent_id = Column(sql.Integer, ForeignKey(Voevent.id))
     ra = Column(sql.Float, nullable=False, index=True)
-    decl = Column(sql.Float, nullable=False, index=True)
+    dec = Column(sql.Float, nullable=False, index=True)
     error = Column(
         sql.Float,
         doc="Error-circle radius associated with coordinate-position (degrees)"
@@ -336,11 +336,11 @@ class Coord(Base, OdictMixin):
 
                 position_list.append(
                     Coord(ra = posn.ra,
-                          decl = posn.dec,
+                          dec = posn.dec,
                           error = posn.err,
                           time = isotime)
                 )
         return position_list
 
 # Q3C indexes for spatial queries:
-Index('q3c_coord_idx', func.q3c_ang2ipix(Coord.ra, Coord.decl))
+Index('q3c_coord_idx', func.q3c_ang2ipix(Coord.ra, Coord.dec))
