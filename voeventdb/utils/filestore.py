@@ -1,7 +1,10 @@
 import tarfile
 from cStringIO import StringIO
 import voeventparse
+import os
 
+import logging
+logger = logging.getLogger(__name__)
 
 def bytestring_to_tar_tuple(filename, s):
     """
@@ -49,16 +52,22 @@ def write_tarball(ivorn_xml_tuples, filepath):
             an ivorn string and an xml bytestring.
         filepath (string): Path to the new tarball to create. Typically of form
             '/path/to/foo.tar.bz2'
+    Returns
+        packet_count (int): Number of packets written to tarball
     """
     out = tarfile.open(filepath, mode='w:bz2')
+    logger.info("Writing packets to tarball at " + filepath)
+    packet_count = 0
     try:
         for (ivorn, xml) in ivorn_xml_tuples:
             out.addfile(*bytestring_to_tar_tuple(
                 filename_from_ivorn(ivorn),
                 xml
             ))
+            packet_count+=1
     finally:
         out.close()
+    return packet_count
 
 def tarfile_xml_generator(fname):
     """
@@ -79,7 +88,7 @@ def tarfile_xml_generator(fname):
     try:
         tarinf = tf.next()
         while tarinf is not None:
-            if  tarinf.isfile() and tarinf.name[-4:] == '.xml':
+            if tarinf.isfile() and tarinf.name[-4:] == '.xml':
                 fbuf = tf.extractfile(tarinf)
                 tarinf.xml = fbuf.read()
                 yield tarinf

@@ -30,6 +30,7 @@ print "FOUND PACKAGES: ", packages
 scripts = [
     "voeventdb/bin/voeventdb_create.py",
     "voeventdb/bin/voeventdb_ingest_tarball.py",
+    "voeventdb/bin/voeventdb_dump_tarball.py",
 ]
 
 setup(

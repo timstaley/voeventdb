@@ -15,7 +15,7 @@ import voeventdb.database.config as dbconfig
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('iso8601').setLevel(
     logging.ERROR)  # Suppress iso8601 debug log.
-logger = logging.getLogger("vo-ingest")
+logger = logging.getLogger("voeventdb-ingest")
 
 
 def directory_arg(p):
@@ -44,7 +44,7 @@ def handle_args():
     parser.add_argument('tarfile',
                         nargs='?',
                         type=filepath_arg,
-                        help='Top level folder to scan for XML files')
+                        help='Tarball containing XML files.')
 
     parser.add_argument('-d', '--dbname', nargs='?',
                         default=str(default_database_name),
