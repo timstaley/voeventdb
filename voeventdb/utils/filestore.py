@@ -93,5 +93,8 @@ def tarfile_xml_generator(fname):
                 tarinf.xml = fbuf.read()
                 yield tarinf
             tarinf = tf.next()
+            # Kludge around tarfile memory leak, cf
+            # http://blogs.it.ox.ac.uk/inapickle/2011/06/20/high-memory-usage-when-using-pythons-tarfile-module/
+            tf.members = []
     finally:
         tf.close()
