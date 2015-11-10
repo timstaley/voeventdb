@@ -249,6 +249,9 @@ class RoleEquals(QueryFilter):
     ]
 
     def filter(self, filter_value):
+        if filter_value not in self.example_values:
+            raise apierror.InvalidQueryString(
+                self.querystring_key, filter_value)
         return Voevent.role == filter_value
 
     def combinator(self, filters):
