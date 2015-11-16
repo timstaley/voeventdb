@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import glob
 
 install_requires = [
     'flask-restless',
@@ -27,11 +28,8 @@ packages = find_packages()
 print
 print "FOUND PACKAGES: ", packages
 
-scripts = [
-    "voeventdb/bin/voeventdb_create.py",
-    "voeventdb/bin/voeventdb_ingest_tarball.py",
-    "voeventdb/bin/voeventdb_dump_tarball.py",
-]
+
+scripts = glob.glob('voeventdb/bin/*.py')
 
 setup(
     name="voeventdb",

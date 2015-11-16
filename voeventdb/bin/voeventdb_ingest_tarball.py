@@ -18,12 +18,6 @@ logging.getLogger('iso8601').setLevel(
 logger = logging.getLogger("voeventdb-ingest")
 
 
-def directory_arg(p):
-    if not os.path.isdir(p):
-        msg = "Cannot find directory at {}".format(p)
-        raise argparse.ArgumentTypeError(msg)
-    return p
-
 
 def filepath_arg(p):
     if not os.path.isfile(p):
