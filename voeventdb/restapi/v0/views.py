@@ -24,6 +24,8 @@ apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
 
 
+# First define helper functions, root url, error handlers:
+
 def add_to_apiv0(queryview_class):
     """
     Partially bind the 'add_to_api' wrapper so we can use it as a decorator.
@@ -104,6 +106,10 @@ def page_not_found(abort_error):
         return jsonify(error_to_dict(abort_error)), abort_error.code
 
 
+# -----------------------------------------------
+# Alphabetically ordered endpoints from here on
+# -----------------------------------------------
+
 @add_to_apiv0
 class AuthoredMonthCount(QueryView):
     """
@@ -147,6 +153,61 @@ class Count(QueryView):
 
     def process_query(self, q):
         return q.count()
+
+@apiv0.route('/full/')
+@apiv0.route('/full/<path:url_encoded_ivorn>')
+def full_view(url_encoded_ivorn=None):
+    """
+    Result (nested dict)::
+
+        {
+            'coords': [ {'posn': (ra,dec),
+                         'error': error_radius},
+                          ...
+                      ],
+             'refs' : [ {'ref_ivorn': "...",
+                        'cite_type':"...",
+                        'description': "..."},
+                        ...
+                      ],
+            'voevent': {
+                        'author_datetime': ...,
+                        'author_ivorn':'...',
+                        'ivorn':'...',
+                        'stream': '...',
+                        'received': ...,
+                        'role' : '...',
+                        },
+          }
+
+
+    Returns all details for the packet specified by IVORN.
+
+    The required IVORN should be appended to the URL after ``/full/``
+    in :ref:`URL-encoded <url-encoding>` form.
+
+    """
+    ivorn = validate_ivorn(url_encoded_ivorn)
+
+    voevent_row = db_session.query(Voevent).filter(
+        Voevent.ivorn == ivorn).one()
+
+    cites = db_session.query(Cite).\
+            filter(Cite.voevent_id == voevent_row.id).all()
+    coords = db_session.query(Coord).\
+        filter(Coord.voevent_id == voevent_row.id).all()
+
+    v_dict = voevent_row.to_odict(exclude=('id','xml'))
+
+    cite_list = [c.to_odict(exclude=('id','voevent_id')) for c in cites]
+    coord_list = [c.to_odict(exclude=('id','voevent_id')) for c in coords]
+
+    result = {'voevent': v_dict,
+              'refs': cite_list,
+              'coords': coord_list,
+              }
+
+    return jsonify(make_response_dict(result))
 
 
 @add_to_apiv0
@@ -273,65 +334,9 @@ def validate_ivorn(url_encoded_ivorn):
     return ivorn
 
 
-@apiv0.route('/full/')
-@apiv0.route('/full/<path:url_encoded_ivorn>')
-def view_full(url_encoded_ivorn=None):
-    """
-    Result (nested dict)::
-
-        {
-            'coords': [ {'posn': (ra,dec),
-                         'error': error_radius},
-                          ...
-                      ],
-             'refs' : [ {'ref_ivorn': "...",
-                        'cite_type':"...",
-                        'description': "..."},
-                        ...
-                      ],
-            'voevent': {
-                        'author_datetime': ...,
-                        'author_ivorn':'...',
-                        'ivorn':'...',
-                        'stream': '...',
-                        'received': ...,
-                        'role' : '...',
-                        },
-          }
-
-
-    Returns all details for the packet specified by IVORN.
-
-    The required IVORN should be appended to the URL after ``/full/``
-    in :ref:`URL-encoded <url-encoding>` form.
-
-    """
-    ivorn = validate_ivorn(url_encoded_ivorn)
-
-    voevent_row = db_session.query(Voevent).filter(
-        Voevent.ivorn == ivorn).one()
-
-    cites = db_session.query(Cite).\
-            filter(Cite.voevent_id == voevent_row.id).all()
-    coords = db_session.query(Coord).\
-        filter(Coord.voevent_id == voevent_row.id).all()
-
-    v_dict = voevent_row.to_odict(exclude=('id','xml'))
-
-    cite_list = [c.to_odict(exclude=('id','voevent_id')) for c in cites]
-    coord_list = [c.to_odict(exclude=('id','voevent_id')) for c in coords]
-
-    result = {'voevent': v_dict,
-              'refs': cite_list,
-              'coords': coord_list,
-              }
-
-    return jsonify(make_response_dict(result))
-
-
 @apiv0.route('/xml/')
 @apiv0.route('/xml/<path:url_encoded_ivorn>')
-def view_xml(url_encoded_ivorn=None):
+def xml_view(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
 

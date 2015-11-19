@@ -30,11 +30,11 @@ class TestWithEmptyDatabase:
         assert rd[ResultKeys.result] == 0
 
     def test_no_ivorn(self):
-        rv = self.c.get(url_for(apiv0.name+'.view_xml'))
+        rv = self.c.get(url_for(apiv0.name+'.xml_view'))
         assert rv.status_code == 400
 
     def test_ivorn_not_found(self):
-        rv = self.c.get(url_for(apiv0.name+'.view_xml') +
+        rv = self.c.get(url_for(apiv0.name+'.xml_view') +
                         urllib.quote_plus('foobar_invalid_ivorn'))
         assert rv.status_code == 422
 
@@ -154,14 +154,14 @@ class TestWithSimpleDatabase:
             assert bool(citecount) == (ivorn in simple_populated_db.cited)
 
     def test_xml_retrieval(self, simple_populated_db):
-        url = url_for(apiv0.name+'.view_xml')
+        url = url_for(apiv0.name+'.xml_view')
         url += urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         present_ivorn = simple_populated_db.inserted_ivorns[0]
         present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
-        url = url_for(apiv0.name+'.view_xml')
+        url = url_for(apiv0.name+'.xml_view')
         url += urllib.quote_plus(present_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
@@ -171,7 +171,7 @@ class TestWithSimpleDatabase:
 
     def test_details_view(self, simple_populated_db):
         #Null case, ivorn not in DB:
-        ep_url = url_for(apiv0.name+'.view_full')
+        ep_url = url_for(apiv0.name+'.full_view')
         url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
