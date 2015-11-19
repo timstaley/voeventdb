@@ -54,7 +54,7 @@ def landing_pages():
     api_details = {
         'message':message,
         'version': apiv0.name,
-        'endpoints' : [str(r) for r in get_apiv0_rules()],
+        'endpoints' : sorted([str(r) for r in get_apiv0_rules()]),
         'docs_url' : docs_url
     }
 
