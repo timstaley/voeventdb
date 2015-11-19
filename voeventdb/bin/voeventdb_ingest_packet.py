@@ -15,6 +15,7 @@ import voeventdb.database.config as dbconfig
 import voeventdb.database.convenience as conv
 
 import voeventparse
+import os
 
 
 def handle_args():
@@ -22,7 +23,9 @@ def handle_args():
     Default values are defined here.
     """
 
-    default_database_name = dbconfig.testdb_corpus_url.database
+    default_database_name = os.environ.get(
+        'VOEVENTDB_DBNAME',
+        dbconfig.testdb_corpus_url.database)
     default_logfile_path = os.path.expanduser("~/voeventdb_packet_ingest.log")
 
     parser = argparse.ArgumentParser(
@@ -42,8 +45,8 @@ def handle_args():
                         default=str(default_database_name),
                         help='Database name')
 
-    parser.add_argument('-l' , '--logfile_path', nargs='?',
-                        default = default_logfile_path,
+    parser.add_argument('-l', '--logfile_path', nargs='?',
+                        default=default_logfile_path,
                         )
     return parser.parse_args()
 
@@ -59,22 +62,22 @@ def setup_logging(logfile_path):
 
 
 
-    #Get to the following size before splitting log into multiple files:
+    # Get to the following size before splitting log into multiple files:
     log_chunk_bytesize = 5e6
 
     info_logfile = logging.handlers.RotatingFileHandler(logfile_path,
-                            maxBytes=log_chunk_bytesize, backupCount=10)
+                                                        maxBytes=log_chunk_bytesize,
+                                                        backupCount=10)
     info_logfile.setFormatter(std_formatter)
     info_logfile.setLevel(logging.DEBUG)
-
 
     stdout_log = logging.StreamHandler()
     stdout_log.setLevel(logging.DEBUG)
     stdout_log.setFormatter(std_formatter)
 
-    #Set up root logger
+    # Set up root logger
     logger = logging.getLogger()
-    logger.handlers=[]
+    logger.handlers = []
     logger.setLevel(logging.DEBUG)
     logger.addHandler(info_logfile)
     logger.addHandler(stdout_log)
@@ -99,7 +102,7 @@ def main():
         session.commit()
     except:
         logger.exception("Could not insert packet with ivorn {} into {}".format(
-        v.attrib['ivorn'], args.dbname))
+            v.attrib['ivorn'], args.dbname))
 
     logger.info("Loaded packet with ivorn {} into {}".format(
         v.attrib['ivorn'], args.dbname))

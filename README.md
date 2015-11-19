@@ -10,7 +10,7 @@ Before the unit-tests or database setup will run, we need a
 installation, and a database login with createdb rights. 
 On a typical Debian system, install postgres with something like:
 
-    sudo apt-get install postgresql libpq-dev
+    sudo apt-get install libpq-dev postgresql-9.3 postgresql-server-dev-9.3
     
 You can check if you have database login and creation rights by running e.g.
 
