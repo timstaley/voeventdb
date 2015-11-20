@@ -46,7 +46,7 @@ def get_apiv0_rules():
 
 
 @apiv0.route('/')
-def landing_pages():
+def apiv0_root():
     """
     API root url. Shows a list of active endpoints.
     """

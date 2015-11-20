@@ -12,6 +12,7 @@ install_requires = [
     'SQLAlchemy',
     'simplejson',
     'voevent-parse>=0.9',
+    'six',
 ]
 
 test_requires = [
