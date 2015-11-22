@@ -24,7 +24,7 @@ apiv0 = Blueprint('apiv0', __name__,
                   url_prefix='/apiv0')
 
 
-# First define helper functions, root url, error handlers:
+# First define a few helper functions...
 
 def add_to_apiv0(queryview_class):
     """
@@ -45,6 +45,31 @@ def get_apiv0_rules():
     return pruned_rules
 
 
+def error_to_dict(error):
+    return {
+        'error': {
+            'code': error.code,
+            'description': error.description,
+            'message': error.message.replace('\n', '').strip()
+        }
+    }
+
+
+def validate_ivorn(url_encoded_ivorn):
+    if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
+        ivorn = urllib.unquote(url_encoded_ivorn)
+    else:
+        ivorn = url_encoded_ivorn
+    if ivorn is None:
+        raise apierror.IvornNotSupplied
+    if not convenience.ivorn_present(db_session, ivorn):
+        raise apierror.IvornNotFound(ivorn)
+    return ivorn
+
+
+# Now root url, error handlers:
+
+
 @apiv0.route('/')
 def apiv0_root():
     """
@@ -54,10 +79,10 @@ def apiv0_root():
                                       'http://' + request.host + '/docs')
     message = "Welcome to the voeventdb REST API!"
     api_details = {
-        'message':message,
+        'message': message,
         'version': apiv0.name,
-        'endpoints' : sorted([str(r) for r in get_apiv0_rules()]),
-        'docs_url' : docs_url
+        'endpoints': sorted([str(r) for r in get_apiv0_rules()]),
+        'docs_url': docs_url
     }
 
     if 'text/html' in request.headers.get("Accept", ""):
@@ -66,16 +91,6 @@ def apiv0_root():
                                )
     else:
         return jsonify(api_details)
-
-
-def error_to_dict(error):
-    return {
-        'error':{
-            'code':error.code,
-            'description': error.description,
-            'message': error.message.replace('\n','').strip()
-        }
-    }
 
 
 @apiv0.errorhandler(apierror.InvalidQueryString)
@@ -88,7 +103,6 @@ def ivorn_error(error):
                                ), error.code
     else:
         return jsonify(error_to_dict(error)), error.code
-
 
 
 @apiv0.app_errorhandler(404)
@@ -154,61 +168,6 @@ class Count(QueryView):
     def process_query(self, q):
         return q.count()
 
-@apiv0.route('/full/')
-@apiv0.route('/full/<path:url_encoded_ivorn>')
-def full_view(url_encoded_ivorn=None):
-    """
-    Result (nested dict)::
-
-        {
-            'coords': [ {'posn': (ra,dec),
-                         'error': error_radius},
-                          ...
-                      ],
-             'refs' : [ {'ref_ivorn': "...",
-                        'cite_type':"...",
-                        'description': "..."},
-                        ...
-                      ],
-            'voevent': {
-                        'author_datetime': ...,
-                        'author_ivorn':'...',
-                        'ivorn':'...',
-                        'stream': '...',
-                        'received': ...,
-                        'role' : '...',
-                        },
-          }
-
-
-    Returns all details for the packet specified by IVORN.
-
-    The required IVORN should be appended to the URL after ``/full/``
-    in :ref:`URL-encoded <url-encoding>` form.
-
-    """
-    ivorn = validate_ivorn(url_encoded_ivorn)
-
-    voevent_row = db_session.query(Voevent).filter(
-        Voevent.ivorn == ivorn).one()
-
-    cites = db_session.query(Cite).\
-            filter(Cite.voevent_id == voevent_row.id).all()
-    coords = db_session.query(Coord).\
-        filter(Coord.voevent_id == voevent_row.id).all()
-
-    v_dict = voevent_row.to_odict(exclude=('id','xml'))
-
-    cite_list = [c.to_odict(exclude=('id','voevent_id')) for c in cites]
-    coord_list = [c.to_odict(exclude=('id','voevent_id')) for c in coords]
-
-    result = {'voevent': v_dict,
-              'refs': cite_list,
-              'coords': coord_list,
-              }
-
-    return jsonify(make_response_dict(result))
-
 
 @add_to_apiv0
 class IvornList(ListQueryView):
@@ -252,9 +211,7 @@ class IvornReferenceCount(ListQueryView):
         return query.ivorn_cites_to_others_count_q(db_session)
 
     def process_query(self, query):
-        return [ tuple(r) for r in query.all()]
-
-
+        return [tuple(r) for r in query.all()]
 
 
 @add_to_apiv0
@@ -274,7 +231,7 @@ class IvornCitedCount(ListQueryView):
         return query.ivorn_cited_from_others_count_q(db_session)
 
     def process_query(self, query):
-        return [ tuple(r) for r in query.all()]
+        return [tuple(r) for r in query.all()]
 
 
 @add_to_apiv0
@@ -322,16 +279,69 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
-def validate_ivorn(url_encoded_ivorn):
-    if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
-        ivorn = urllib.unquote(url_encoded_ivorn)
-    else:
-        ivorn = url_encoded_ivorn
-    if ivorn is None:
-        raise apierror.IvornNotSupplied
-    if not convenience.ivorn_present(db_session, ivorn):
-        raise apierror.IvornNotFound(ivorn)
-    return ivorn
+@apiv0.route('/synopsis/')
+@apiv0.route('/synopsis/<path:url_encoded_ivorn>')
+def synopsis_view(url_encoded_ivorn=None):
+    """
+    Result:
+        Nested dict providing key details, e.g.::
+
+            {'coords': [
+                            {
+                                'dec': 10.9712,
+                                'error': 0.05,
+                                'ra': 233.7307,
+                                'time': '2015-10-01T15:04:22.930000+00:00'
+                            },
+                            ...
+                        ],
+             'refs':   [
+                            {
+                                'cite_type': u'followup',
+                                'description': 'This is the XRT Position ...',
+                                'ref_ivorn': 'ivo://nasa.gsfc.gcn/SWIFT#BAT_...'
+                            },
+                            ...
+                        ],
+             'voevent': {
+                            'author_datetime': '2015-10-01T15:04:46+00:00',
+                            'author_ivorn': 'ivo://nasa.gsfc.tan/gcn',
+                            'ivorn': 'ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_657286-112',
+                            'received': '2015-11-19T20:41:38.226431+00:00',
+                            'role': 'observation',
+                            'stream': 'nasa.gsfc.gcn/SWIFT',
+                            'version': '2.0'
+                        }
+            }
+
+
+    Returns some key details for the packet specified by IVORN.
+
+    The required IVORN should be appended to the URL after ``/synopsis/``
+    in :ref:`URL-encoded <url-encoding>` form.
+
+    """
+    ivorn = validate_ivorn(url_encoded_ivorn)
+
+    voevent_row = db_session.query(Voevent).filter(
+        Voevent.ivorn == ivorn).one()
+
+    cites = db_session.query(Cite). \
+        filter(Cite.voevent_id == voevent_row.id).all()
+    coords = db_session.query(Coord). \
+        filter(Coord.voevent_id == voevent_row.id).all()
+
+    v_dict = voevent_row.to_odict(exclude=('id', 'xml'))
+
+    cite_list = [c.to_odict(exclude=('id', 'voevent_id')) for c in cites]
+    coord_list = [c.to_odict(exclude=('id', 'voevent_id')) for c in coords]
+
+    result = {'voevent': v_dict,
+              'refs': cite_list,
+              'coords': coord_list,
+              }
+
+    return jsonify(make_response_dict(result))
 
 
 @apiv0.route('/xml/')

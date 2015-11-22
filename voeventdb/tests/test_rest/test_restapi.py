@@ -171,7 +171,7 @@ class TestWithSimpleDatabase:
 
     def test_details_view(self, simple_populated_db):
         #Null case, ivorn not in DB:
-        ep_url = url_for(apiv0.name+'.full_view')
+        ep_url = url_for(apiv0.name+'.synopsis_view')
         url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422

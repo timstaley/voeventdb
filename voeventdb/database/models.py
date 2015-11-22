@@ -170,9 +170,20 @@ class Voevent(Base, OdictMixin):
 
 class Cite(Base, OdictMixin):
     """
-    Record the references cited from each VOEvent.
+    Record the references ('Cites') contained in each VOEvent.
 
     Relationship is one Voevent -> Many Cites.
+
+    .. note:: On naming
+
+        `Reference` would be a more appropriate class name,
+        since in the conventions of bibliometrics, 'references are made,
+        and citations are received'.
+        However, 'references' is a reserved Postgres word, cf
+        http://www.postgresql.org/docs/9.3/static/sql-keywords-appendix.html .
+        Grammatically speaking, `cite` is a valid noun form, in addition to
+        verb: http://www.grammarphobia.com/blog/2011/10/cite.html And it's much
+        shorter than 'citation'.
 
 
     .. note:: On store-by-value vs store-by-reference
@@ -186,16 +197,6 @@ class Cite(Base, OdictMixin):
         with just a bare IVORN and no other data if it's cited but not ingested,
         with a flag-bit set accordingly. Or we could create a separate 'cited
         IVORNS' table. But probably you ain't gonna need it.
-
-
-    .. note:: On naming
-
-        `Reference` might be a more appropriate class name, but it's a reserved
-        Postgres word, cf
-        http://www.postgresql.org/docs/9.3/static/sql-keywords-appendix.html .
-        Grammatically speaking, `cite` is a valid noun form, in addition to
-        verb: http://www.grammarphobia.com/blog/2011/10/cite.html And it's much
-        shorter than 'citation'.
 
 
     .. note:: On descriptions

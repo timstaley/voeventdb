@@ -2,7 +2,7 @@
 """
 Initialize the Flask app.
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 from sqlalchemy import engine
 from flask import Flask, send_from_directory
@@ -40,12 +40,14 @@ if __name__ == '__main__':
     @app.route('/docs/<path:filename>')
     def serve_docs_in_debug(filename='index.html'):
         import os
-        from voeventdb import __path__ as package_root_dir
-        package_root_dir = package_root_dir[0]
-        docs_build_dir = os.path.join(os.path.dirname(package_root_dir),
+        from voeventdb.restapi import __path__ as restapi_root_dir
+        voeventdb_package_root_dir = os.path.dirname(restapi_root_dir[0])
+        print("Package root dir:", voeventdb_package_root_dir)
+        docs_build_dir = os.path.join(os.path.dirname(voeventdb_package_root_dir),
                                       'docs', 'build', 'html')
         return send_from_directory(docs_build_dir, filename)
 
 
     app.config['APACHE_NODECODE'] = False
+    print("Running in debug mode")
     app.run(debug=True)
