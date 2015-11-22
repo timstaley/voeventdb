@@ -114,8 +114,8 @@ class TestWithSimpleDatabase:
         for _ in range(10):
             with self.c as c:
                 url = url_for(apiv0.name+'.'+views.IvornList.view_name,
-                                    limit=3,
-                                    contains='TEST')
+                                limit=3,
+                                ivorn_contains='TEST')
                 # print "URL", url
                 rv = self.c.get(url)
                 # print "ARGS:", request.args

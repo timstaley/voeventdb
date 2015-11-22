@@ -136,7 +136,7 @@ class IvornContains(QueryFilter):
     """
     Return only VOEvents which have the given substring in their IVORN.
     """
-    querystring_key = 'contains'
+    querystring_key = 'ivorn_contains'
     example_values = ['BAT_GRB_Pos',
                       'XRT']
 
@@ -144,8 +144,8 @@ class IvornContains(QueryFilter):
         return Voevent.ivorn.like('%{}%'.format(filter_value))
 
     def combinator(self, filters):
-        """OR"""
-        return or_(filters)
+        """AND"""
+        return and_(filters)
 
 
 @add_to_filter_registry
@@ -160,7 +160,7 @@ class IvornPrefix(QueryFilter):
 
 
     """
-    querystring_key = 'prefix'
+    querystring_key = 'ivorn_prefix'
     example_values = [
         'ivo://nasa.gsfc.gcn',
         urllib.quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
