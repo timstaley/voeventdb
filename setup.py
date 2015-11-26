@@ -1,7 +1,9 @@
+
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
 import glob
+import versioneer
 
 install_requires = [
     'flask-restless',
@@ -34,7 +36,8 @@ scripts = glob.glob('voeventdb/bin/*.py')
 
 setup(
     name="voeventdb",
-    version="0.1a0",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description="Data-store and accompanying RESTful query API for archiving "
                 "and retrieving VOEvent packets.",
     author="Tim Staley",

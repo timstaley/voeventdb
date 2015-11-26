@@ -12,8 +12,12 @@
     <div class="row">
         <div class="col-8">
             <h1>voeventdb</h1>
-            <h2>{{ version }}</h2>
-            <p>{{ message }}</p>
+            <h2>{{ api_version }}</h2>
+            <p>(Git commit:
+                <a href="https://github.com/timstaley/voeventdb/commits/{{git_sha}}">
+                    {{ git_sha }}</a>)
+            </p>
+            <h4>{{ message }}</h4>
 
             <hr>
             {% block extracontent %}

@@ -15,6 +15,7 @@ import voeventdb.database.query as query
 from voeventdb.restapi.v0.viewbase import (
     QueryView, ListQueryView, _add_to_api, make_response_dict
 )
+from voeventdb import __versiondict__ as package_version_dict
 
 # This import may look unused, but activates the filter registry -
 # Do not delete!
@@ -71,7 +72,7 @@ def validate_ivorn(url_encoded_ivorn):
 
 
 @apiv0.route('/')
-def apiv0_root():
+def apiv0_root_view():
     """
     API root url. Shows a list of active endpoints.
     """
@@ -80,7 +81,8 @@ def apiv0_root():
     message = "Welcome to the voeventdb REST API!"
     api_details = {
         'message': message,
-        'version': apiv0.name,
+        'api_version': apiv0.name,
+        'git_sha': package_version_dict['full-revisionid'][:8],
         'endpoints': sorted([str(r) for r in get_apiv0_rules()]),
         'docs_url': docs_url
     }
