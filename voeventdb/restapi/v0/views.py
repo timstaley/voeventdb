@@ -7,6 +7,8 @@ from flask import (
 
 import urllib
 
+from voeventdb import __versiondict__ as package_version_dict
+from voeventdb.restapi.annotate import lookup_relevant_urls
 from voeventdb.database import session_registry as db_session
 from voeventdb.database.models import Voevent, Cite, Coord
 import voeventdb.database.convenience as convenience
@@ -15,7 +17,7 @@ import voeventdb.database.query as query
 from voeventdb.restapi.v0.viewbase import (
     QueryView, ListQueryView, _add_to_api, make_response_dict
 )
-from voeventdb import __versiondict__ as package_version_dict
+
 
 # This import may look unused, but activates the filter registry -
 # Do not delete!
@@ -85,7 +87,7 @@ def apiv0_root_view():
         'api_version': apiv0.name,
         'git_sha': package_version_dict['full-revisionid'][:8],
         'version_tag':package_version_dict['version'],
-        'endpoints': get_apiv0_rules(),
+        'endpoints': [str(r) for r in get_apiv0_rules()],
         'docs_url': docs_url
     }
 
@@ -290,32 +292,35 @@ def synopsis_view(url_encoded_ivorn=None):
     Result:
         Nested dict providing key details, e.g.::
 
-            {'coords': [
+            {"coords": [
                             {
-                                'dec': 10.9712,
-                                'error': 0.05,
-                                'ra': 233.7307,
-                                'time': '2015-10-01T15:04:22.930000+00:00'
+                                "dec": 10.9712,
+                                "error": 0.05,
+                                "ra": 233.7307,
+                                "time": "2015-10-01T15:04:22.930000+00:00"
                             },
                             ...
                         ],
-             'refs':   [
+             "refs":   [
                             {
-                                'cite_type': u'followup',
-                                'description': 'This is the XRT Position ...',
-                                'ref_ivorn': 'ivo://nasa.gsfc.gcn/SWIFT#BAT_...'
+                                "cite_type": u"followup",
+                                "description": "This is the XRT Position ...",
+                                "ref_ivorn": "ivo://nasa.gsfc.gcn/SWIFT#BAT_..."
                             },
                             ...
                         ],
-             'voevent': {
-                            'author_datetime': '2015-10-01T15:04:46+00:00',
-                            'author_ivorn': 'ivo://nasa.gsfc.tan/gcn',
-                            'ivorn': 'ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_657286-112',
-                            'received': '2015-11-19T20:41:38.226431+00:00',
-                            'role': 'observation',
-                            'stream': 'nasa.gsfc.gcn/SWIFT',
-                            'version': '2.0'
+             "voevent": {
+                            "author_datetime": "2015-10-01T15:04:46+00:00",
+                            "author_ivorn": "ivo://nasa.gsfc.tan/gcn",
+                            "ivorn": "ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_657286-112",
+                            "received": "2015-11-19T20:41:38.226431+00:00",
+                            "role": "observation",
+                            "stream": "nasa.gsfc.gcn/SWIFT",
+                            "version": "2.0"
                         }
+             "relevant_urls": [ "http://address1.foo.bar",
+                                "http://address2.foo.bar"
+                                ]
             }
 
 
@@ -340,9 +345,12 @@ def synopsis_view(url_encoded_ivorn=None):
     cite_list = [c.to_odict(exclude=('id', 'voevent_id')) for c in cites]
     coord_list = [c.to_odict(exclude=('id', 'voevent_id')) for c in coords]
 
+    relevant_urls = lookup_relevant_urls(voevent_row, cites)
+
     result = {'voevent': v_dict,
               'refs': cite_list,
               'coords': coord_list,
+              'relevant_urls': relevant_urls,
               }
 
     return jsonify(make_response_dict(result))

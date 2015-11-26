@@ -9,6 +9,9 @@ from voeventdb.database.config import default_admin_db_url, testdb_empty_url
 from voeventdb.database import db_utils, session_registry, session_factory
 from voeventdb.database.models import Base, Voevent
 import voeventdb.tests.fixtures.fake as fake
+from voeventdb.tests.resources import swift_bat_grb_655721
+
+from collections import defaultdict
 
 
 # Would like to use 'session' scoped fixture - i.e. create once for all
@@ -70,9 +73,10 @@ def fixture_db_session(empty_db_connection):
 
 class SimpleDbFixture:
 
-    def add_citation(self, packet, ref_ivorn):
+    def add_reference(self, packet, ref_ivorn):
         self.n_citations += 1
-        self.cited.add(ref_ivorn)
+        # self.cited.add(ref_ivorn)
+        self.cite_counts[ref_ivorn] = self.cite_counts[ref_ivorn] + 1
         self.followup_packets.add(packet.attrib['ivorn'])
         vp.add_citations(packet,
                          vp.Citation(
@@ -90,7 +94,9 @@ class SimpleDbFixture:
             role=vp.definitions.roles.utility)
 
         # Packets referenced by other packets:
-        self.cited = set()
+        # self.cited = set()
+        # Count times ivorn referenced by other packets in db :
+        self.cite_counts = defaultdict(int)
         # Packets containing at least one cite entry
         self.followup_packets = set()
         # Total number of citations (one packet may have multiple cite entries)
@@ -99,15 +105,17 @@ class SimpleDbFixture:
         c0 = packets[0].attrib['ivorn']
         c1 = packets[1].attrib['ivorn']
         #One reference in ep0
-        self.add_citation(extra_packets[0],  c0)
+        self.add_reference(extra_packets[0],  c0)
         #Two references in ep1
-        self.add_citation(extra_packets[1],c0)
-        self.add_citation(extra_packets[1],c1)
+        self.add_reference(extra_packets[1],c0)
+        self.add_reference(extra_packets[1],c1)
         #
         # #Now cite ep[0], making it both cites / cited_by
         c2 = extra_packets[0].attrib['ivorn']
-        self.add_citation(extra_packets[2],c2)
+        self.add_reference(extra_packets[2],c2)
 
+        # Add a citation to a SWIFT GRB event (tests 'url annotation' func)
+        self.add_reference(extra_packets[3], swift_bat_grb_655721.attrib['ivorn'])
 
         packets.extend(extra_packets)
         self.packet_dict = { pkt.attrib['ivorn'] : pkt for pkt in packets }
