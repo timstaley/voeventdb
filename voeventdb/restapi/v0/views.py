@@ -35,7 +35,8 @@ def add_to_apiv0(queryview_class):
 
 
 def get_apiv0_rules():
-    rules = [r for r in sorted(current_app.url_map.iter_rules())
+    rules = [r for r in sorted(current_app.url_map.iter_rules(),
+                               key=lambda x: str(x))
              if r.endpoint.startswith('apiv0')]
     endpoints_listed = set()
     pruned_rules = []
@@ -83,7 +84,8 @@ def apiv0_root_view():
         'message': message,
         'api_version': apiv0.name,
         'git_sha': package_version_dict['full-revisionid'][:8],
-        'endpoints': sorted([str(r) for r in get_apiv0_rules()]),
+        'version_tag':package_version_dict['version'],
+        'endpoints': get_apiv0_rules(),
         'docs_url': docs_url
     }
 

@@ -13,16 +13,24 @@
         <div class="col-8">
             <h1>voeventdb</h1>
             <h2>{{ api_version }}</h2>
-            <p>(Git commit:
-                <a href="https://github.com/timstaley/voeventdb/commits/{{git_sha}}">
-                    {{ git_sha }}</a>)
-            </p>
+
             <h4>{{ message }}</h4>
 
             <hr>
             {% block extracontent %}
             {% include "includes/endpoints.html" %}
             {% endblock %}
+            <hr>
+            <dl>
+                <dt>Version tag:</dt>
+                <dd>{{ version_tag }}</dd>
+
+                <dt>Git commit:</dt>
+                <dd>
+                    <a href="https://github.com/timstaley/voeventdb/commits/{{git_sha}}">
+                    {{ git_sha }}</a></dd>
+
+            </dl>
 
         </div>
     </div>
