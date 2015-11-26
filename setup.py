@@ -1,6 +1,7 @@
 
 #!/usr/bin/env python
 
+from __future__ import print_function
 from setuptools import setup, find_packages
 import glob
 import versioneer
@@ -28,8 +29,8 @@ extras_require = {
     'all': test_requires,
 }
 packages = find_packages()
-print
-print "FOUND PACKAGES: ", packages
+print()
+print("FOUND PACKAGES: ", packages)
 
 
 scripts = glob.glob('voeventdb/bin/*.py')
@@ -44,7 +45,11 @@ setup(
     author_email="timstaley337@gmail.com",
     url="https://github.com/timstaley/voeventdb",
     packages=packages,
-    package_data={'voeventdb':['tests/resources/*.xml']},
+    package_data={'voeventdb':['tests/resources/*.xml',
+                               'restapi/static/css/*/*.css',
+                               'restapi/templates/*.html',
+                               'restapi/templates/*/*.html',
+                               ]},
     install_requires=install_requires,
     extras_require=extras_require,
     scripts=scripts
