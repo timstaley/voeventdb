@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 """
 Base classes used for generating views
 """
@@ -6,74 +7,14 @@ from flask.views import View
 from flask import (
     jsonify, request, current_app
 )
-from voeventdb.restapi.v0.filter_base import apply_filters
+
 from voeventdb.database.models import Voevent
+from voeventdb.restapi.v0.filter_base import apply_filters
+from voeventdb.restapi.v0.definitions import (
+    ResultKeys, PaginationKeys, OrderValues)
+from voeventdb.restapi.v0.apierror import InvalidQueryString
 
-
-class PaginationKeys:
-    """
-    Use *limit* and *offset* values in your querystring to control slicing,
-    i.e. the subset of an ordered list returned in the current query.
-
-    (Only applies to list views, e.g. the IVORN listing endpoint.)
-
-    The keywords are adopted from SQL,
-    cf http://www.postgresql.org/docs/9.3/static/queries-limit.html
-
-    Note that if no values are supplied, a default limit value is applied.
-    (You can still check what it was, by inspecting the relevant value in the
-    :ref:`result-dict <returned-content>`.)
-    """
-    # These hardly need soft-defining, but we include them for completeness.
-    limit = 'limit'
-    offset = 'offset'
-
-
-class ResultKeys:
-    """
-    Most :ref:`endpoints <endpoints>` return a JSON-encoded dictionary.
-    [#ApartFromXml]_
-
-    At the top level, the dictionary will contain some or all of the following
-    keys:
-
-    .. [#ApartFromXml] (The exception is the XML-retrieval endpoint, obviously.)
-
-    .. note::
-        The key-strings can be imported and used in autocomplete-friendly
-        fashion, for example::
-
-            from voeventdb.restapi.v0 import ResultKeys as rkeys
-            print rkeys.querystring
-    """
-    endpoint = 'endpoint'
-    "The endpoint the query was made against."
-
-    limit = 'limit'
-    """
-    The maximum number of entries returned in a single request
-    (Only applies to list-view endpoints.)
-    """
-
-    querystring = 'querystring'
-    """
-    A dictionary displaying the query-string values applied.
-    (With urlencode-decoding applied as necessary.)
-
-    Note that each entry returns a list, as a query-key may be applied
-    multiple times.
-    """
-
-    result = 'result'
-    """
-    The data returned by your query, either in dictionary
-    or list format according to the endpoint.
-
-    See :ref:`endpoint listings <endpoints>` for detail.
-    """
-
-    url = 'url'
-    "The complete URL the query was made against."
+from sqlalchemy import asc, desc
 
 
 def make_response_dict(result):
@@ -110,13 +51,36 @@ class ListQueryView(View):
         """
         return query.all()
 
+    def set_ordering(self, query):
+        q = query
+        order = None
+        order_stringval = request.args.get(PaginationKeys.order, None)
+        if order_stringval:
+            if order_stringval not in OrderValues._value_list:
+                raise InvalidQueryString(
+                    querystring_key=PaginationKeys.order,
+                    querystring_value=order_stringval,
+                    reason="Not a valid ordering, try one of {}.".format(
+                        OrderValues._value_list))
+            if order_stringval[-5:] == '_desc':
+                order = desc(order_stringval[:-5])
+            else:
+                order = asc(order_stringval)
+            q = q.order_by(order)
+
+        # Usually append id ordering as a tie-breaker, ensures consistency:
+        if order_stringval != OrderValues.id_desc:
+            q = q.order_by(Voevent.id)
+        return q
+
     def dispatch_request(self):
         limit = request.args.get(PaginationKeys.limit, None)
         if not limit:
             limit = current_app.config['DEFAULT_QUERY_LIMIT']
+
         q = self.get_query()
         q = apply_filters(q, request.args)
-        q = q.order_by(Voevent.id)
+        q = self.set_ordering(q)
         q = q.limit(limit)
         q = q.offset(request.args.get(PaginationKeys.offset))
         result = self.process_query(q)
@@ -130,5 +94,5 @@ class ListQueryView(View):
 def _add_to_api(queryview_class, api):
     name = queryview_class.view_name
     api.add_url_rule('/' + name,
-                       view_func=queryview_class.as_view(name))
+                     view_func=queryview_class.as_view(name))
     return queryview_class

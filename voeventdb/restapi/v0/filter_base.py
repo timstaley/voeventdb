@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from voeventdb.restapi.v0.apierror import InvalidQueryString
+from voeventdb.restapi.v0.definitions import PaginationKeys
+
 """
 Define the underlying machinery we'll use to implement query filters.
 """
 
 filter_registry = {}
+
 
 def add_to_filter_registry(cls):
     """
@@ -12,6 +15,7 @@ def add_to_filter_registry(cls):
     """
     filter_registry[cls.querystring_key] = cls()
     return cls
+
 
 class QueryFilter(object):
     """
@@ -66,19 +70,20 @@ class QueryFilter(object):
         query = query.filter(self.generate_filter_set(args))
         return query
 
+
 def apply_filters(query, args):
     """
-    Apply all QueryFilters.
+    Apply all QueryFilters, validating the querystring in the process.
     """
-    for querystring_key,filter_value in args.iteritems(multi=True):
+    for querystring_key, filter_value in args.iteritems(multi=True):
         if querystring_key in filter_registry:
             cls_inst = filter_registry[querystring_key]
             query = cls_inst.apply_filter(query, args)
-        elif querystring_key=='limit' or querystring_key=='offset':
+        elif querystring_key in PaginationKeys._value_list:
             pass
         else:
-            raise InvalidQueryString(querystring_key,filter_value)
+            raise InvalidQueryString(querystring_key, filter_value)
     return query
 
-def list_querystring_keys():
-    return [cls.querystring_key for cls in filter_registry]
+
+
