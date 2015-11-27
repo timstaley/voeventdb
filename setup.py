@@ -7,8 +7,7 @@ import glob
 import versioneer
 
 install_requires = [
-    'flask-restless',
-    #'flask-restful',
+    'flask',
     'iso8601',
     'psycopg2',
     'pytz',
