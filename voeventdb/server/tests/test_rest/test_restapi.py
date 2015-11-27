@@ -2,12 +2,17 @@ from __future__ import absolute_import
 import pytest
 from voeventdb.server.database.models import Cite
 from voeventdb.server.restapi.v0.views import apiv0
-from voeventdb.server.restapi.v0.viewbase import ResultKeys
+from voeventdb.server.restapi.v0.definitions import (
+    OrderValues,
+    PaginationKeys,
+    ResultKeys,
+)
 import voeventdb.server.restapi.v0.views as views
 import voeventdb.server.restapi.v0.filters as filters
 import json
 import urllib
 from flask import url_for
+
 
 
 @pytest.mark.usefixtures('fixture_db_session')
@@ -129,9 +134,17 @@ class TestWithSimpleDatabase:
             assert rs == rs0
 
     def test_reference_counts(self, simple_populated_db):
+        """
+        Test reference counts are as expected.
+
+        NB we check that 'order by id' works as expected (Voevent.id,
+        not cite.id!)
+        """
         with self.c as c:
             url = url_for(
-                apiv0.name + '.' + views.IvornReferenceCount.view_name)
+                apiv0.name + '.' + views.IvornReferenceCount.view_name,
+                **{PaginationKeys.order:OrderValues.id}
+                )
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)

@@ -11,7 +11,11 @@ from flask import (
 from voeventdb.server.database.models import Voevent
 from voeventdb.server.restapi.v0.filter_base import apply_filters
 from voeventdb.server.restapi.v0.definitions import (
-    ResultKeys, PaginationKeys, OrderValues)
+    OrderValues,
+    order_by_string_to_col_map,
+    PaginationKeys,
+    ResultKeys,
+)
 from voeventdb.server.restapi.v0.apierror import InvalidQueryString
 
 from sqlalchemy import asc, desc
@@ -53,8 +57,8 @@ class ListQueryView(View):
 
     def set_ordering(self, query):
         q = query
-        order = None
         order_stringval = request.args.get(PaginationKeys.order, None)
+        ordering_func = asc
         if order_stringval:
             if order_stringval not in OrderValues._value_list:
                 raise InvalidQueryString(
@@ -62,14 +66,16 @@ class ListQueryView(View):
                     querystring_value=order_stringval,
                     reason="Not a valid ordering, try one of {}.".format(
                         OrderValues._value_list))
+
             if order_stringval[-5:] == '_desc':
-                order = desc(order_stringval[:-5])
-            else:
-                order = asc(order_stringval)
-            q = q.order_by(order)
+                ordering_func = desc
+                order_stringval = order_stringval[:-5]
+
+        ordering_col = order_by_string_to_col_map[order_stringval]
+        q = q.order_by(ordering_func(ordering_col))
 
         # Usually append id ordering as a tie-breaker, ensures consistency:
-        if order_stringval != OrderValues.id_desc:
+        if ordering_col != Voevent.id:
             q = q.order_by(Voevent.id)
         return q
 

@@ -1,5 +1,5 @@
 from copy import deepcopy
-
+from voeventdb.server.database.models import (Voevent,Cite,Coord)
 
 def _list_class_vars(cls, exclude=None):
     """
@@ -64,6 +64,13 @@ class OrderValues:
     """
     Order results by ivorn (alphabetically).
     """
+
+order_by_string_to_col_map = {
+    OrderValues.author_datetime: Voevent.author_datetime,
+    OrderValues.id : Voevent.id,
+    OrderValues.ivorn : Voevent.ivorn,
+    None : Voevent.id,
+}
 
 
 @add_value_list_attribute

@@ -9,6 +9,7 @@ from flask import Flask, send_from_directory
 
 from voeventdb.server.database import session_registry
 from voeventdb.server.restapi.v0.views import apiv0
+import voeventdb.server.restapi.v0.filters
 from voeventdb.server.restapi.v0.jsonencoder import IsodatetimeJSONEncoder
 from voeventdb.server.database.config import testdb_corpus_url
 
@@ -24,6 +25,7 @@ app.register_blueprint(apiv0)
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     session_registry.remove()
+
 
 app.json_encoder = IsodatetimeJSONEncoder
 
