@@ -45,6 +45,9 @@ is hosted and documented at http://voeventdb.4pisky.org/.
  - Extensive filters: narrow your query to a particular type of alert, limit
    it to packets authored between certain dates, only return events which 
    are cited by others, return all events citing one particular packet, etc etc.
+ - Tools for loading from / dumping to BZ2-compressed tarballs containing the 
+   original XML packets. This allows for version migration, or exporting the 
+   archive to another tool entirely.
 
 
 ## All-in-one installation scripts for the [DevOps][] enthusiast 
