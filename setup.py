@@ -32,10 +32,10 @@ print()
 print("FOUND PACKAGES: ", packages)
 
 
-scripts = glob.glob('voeventdb/bin/*.py')
+scripts = glob.glob('voeventdb/server/bin/*.py')
 
 setup(
-    name="voeventdb",
+    name="voeventdb.server",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     description="Data-store and accompanying RESTful query API for archiving "
@@ -44,7 +44,7 @@ setup(
     author_email="timstaley337@gmail.com",
     url="https://github.com/timstaley/voeventdb",
     packages=packages,
-    package_data={'voeventdb':['tests/resources/*.xml',
+    package_data={'voeventdb.server':['tests/resources/*.xml',
                                'restapi/static/css/*/*.css',
                                'restapi/templates/*.html',
                                'restapi/templates/*/*.html',

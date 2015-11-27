@@ -1,1 +1,2 @@
 voeventdb/_version.py export-subst
+voeventdb/server/_version.py export-subst

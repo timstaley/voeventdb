@@ -89,11 +89,11 @@ of data. You can use pagination-keys in the same manner as
 query-keys (i.e. in the query-string) to control this:
 
 
-.. autoclass:: voeventdb.restapi.v0.definitions.PaginationKeys
+.. autoclass:: voeventdb.server.restapi.v0.definitions.PaginationKeys
     :members:
     :undoc-members:
 
-.. autoclass:: voeventdb.restapi.v0.definitions.OrderValues
+.. autoclass:: voeventdb.server.restapi.v0.definitions.OrderValues
     :members:
     :undoc-members:
 
@@ -101,6 +101,6 @@ query-keys (i.e. in the query-string) to control this:
 
 Returned content
 ----------------
-.. autoclass:: voeventdb.restapi.v0.viewbase.ResultKeys
+.. autoclass:: voeventdb.server.restapi.v0.viewbase.ResultKeys
     :members:
     :undoc-members:

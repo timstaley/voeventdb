@@ -120,7 +120,7 @@ def get_routes(app, endpoint=None):
 
 autodocflask.get_routes = get_routes
 
-from voeventdb.restapi.app import app
+from voeventdb.server.restapi.app import app
 # OK, let's get ugly!
 # sphinx.contrib.autohttp has no way to hyperlink the endpoint headings.
 # So instead, we add hyperlinks in the docstrings of the APIV0 endpoints:
