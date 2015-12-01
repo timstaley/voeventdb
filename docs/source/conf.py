@@ -3,7 +3,14 @@
 # voeventdb documentation build configuration file, created by
 # sphinx-quickstart on Tue Oct  6 14:09:26 2015.
 #
+from __future__ import print_function
+import os
+import sys
+rootdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+print("Rootdir", rootdir)
+sys.path.append(rootdir)
 
+print("SYSPATH:", sys.path)
 # -- General configuration ------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',
@@ -36,9 +43,10 @@ author = u'Tim Staley'
 # built documents.
 #
 # The short X.Y version.
-version = '0.1a0'
+from voeventdb.server import __version__
+version = __version__
 # The full version, including alpha/beta/rc tags.
-release = '0.1a0'
+release = __version__
 
 language = None
 
@@ -131,7 +139,7 @@ import textwrap
 
 def add_hyperlink_to_docstring(rule, app):
     view_func = app.view_functions[rule.endpoint]
-    print "Monkey-patching ", rule
+    print("Monkey-patching ", rule)
     rawdoc = textwrap.dedent(view_func.__doc__)
     target = str(rule).split('<')[0]
     view_func.__doc__ = '\n(`Link <{}>`__)\n'.format(target) + rawdoc

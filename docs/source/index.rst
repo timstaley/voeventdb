@@ -1,12 +1,15 @@
 Welcome to voeventdb's documentation!
 ========================================
 
+Version |version|
+
+
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+    :maxdepth: 3
 
-   apiv0/index
+    apiv0/index
 
 
 
