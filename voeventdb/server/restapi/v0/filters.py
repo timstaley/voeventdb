@@ -92,7 +92,7 @@ class ConeSearch(QueryFilter):
     querystring_key = 'cone'
     example_values = [
         '[10,20,5]',
-        '[-30,359.9,5]'
+        '[359.9,-30,5]'
     ]
     simplejoin_tables = [Coord, ]
 
