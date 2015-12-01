@@ -3,6 +3,9 @@ import getpass
 import os
 import subprocess
 
+import os
+on_rtd = (os.environ.get('READTHEDOCS', None) == 'True')
+
 from sqlalchemy.engine.url import URL
 
 default_username = getpass.getuser()
@@ -32,18 +35,19 @@ def make_testdb_url(dbsuffix):
 pg_sharedir = subprocess.check_output(['pg_config', '--sharedir']).strip()
 q3c_batchfile_path = os.path.join(pg_sharedir, 'contrib', 'q3c.sql')
 
-try:
-    with open(q3c_batchfile_path) as f:
-        _q3c_batch_raw = f.readlines()
-        # We do our own transaction management,
-        # so we ditch the 'BEGIN' and 'END' statements from q3c.sql
-        q3c_batch = ''.join(_q3c_batch_raw[2:-2])
-except IOError as e:
-    raise IOError(
-        str(e) +
-        "\nCould not find q3c batchfile at {}, have you installed q3c?".format(
-            q3c_batchfile_path
-        ))
+if not on_rtd:
+    try:
+        with open(q3c_batchfile_path) as f:
+            _q3c_batch_raw = f.readlines()
+            # We do our own transaction management,
+            # so we ditch the 'BEGIN' and 'END' statements from q3c.sql
+            q3c_batch = ''.join(_q3c_batch_raw[2:-2])
+    except IOError as e:
+        raise IOError(
+            str(e) +
+            "\nCould not find q3c batchfile at {}, have you installed q3c?".format(
+                q3c_batchfile_path
+            ))
 
 testdb_temp_url = make_testdb_url('temp')
 testdb_empty_url = make_testdb_url('empty')
