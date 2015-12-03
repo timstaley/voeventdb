@@ -36,8 +36,8 @@ class OrderValues:
     Values that may be used in a querystring with the 'order' key.
 
     E.g. By specifying ``order=author_datetime`` in a querystring,
-    results are returned orderd by author_datetime (ascending, i.e. oldest
-    first). By default, results are returned of database-id (ascending) order,
+    results are returned ordered by author_datetime (ascending, i.e. oldest
+    first). By default, results are returned in database-id (ascending) order,
     which in effect means that the first results to be loaded into the database
     are returned first.
 
@@ -137,7 +137,7 @@ class ResultKeys:
     A dictionary displaying the query-string values applied.
     (With urlencode-decoding applied as necessary.)
 
-    Note that each entry returns a list, as a query-key may be applied
+    Note that each entry contains a list, as a query-key may be applied
     multiple times.
     """
 

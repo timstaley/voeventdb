@@ -7,8 +7,9 @@ Version |version|
 Contents:
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 0
 
+    overview/index
     apiv0/index
 
 

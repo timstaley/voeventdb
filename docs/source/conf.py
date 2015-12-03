@@ -99,6 +99,7 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+nitpicky = True
 
 
 # Ugly hack to fix the endpoint sorting:

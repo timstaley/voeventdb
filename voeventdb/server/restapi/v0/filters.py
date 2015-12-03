@@ -26,7 +26,9 @@ class AuthoredSince(QueryFilter):
     """
     querystring_key = 'authored_since'
     example_values = ['2015-10-09T21:34:19',
-                      '2015-10-09', ]
+                      '2015-10-09',
+                      '2015-10',
+                      ]
 
     def filter(self, filter_value):
         bound_dt = iso8601.parse_date(filter_value)
@@ -46,7 +48,9 @@ class AuthoredUntil(QueryFilter):
     """
     querystring_key = 'authored_until'
     example_values = ['2015-10-09T21:34:19',
-                      '2015-10-09', ]
+                      '2015-10-09',
+                      '2015-10',
+                      ]
 
     def filter(self, filter_value):
         bound_dt = iso8601.parse_date(filter_value)

@@ -86,7 +86,7 @@ def apiv0_root_view():
         'message': message,
         'api_version': apiv0.name,
         'git_sha': package_version_dict['full-revisionid'][:8],
-        'version_tag':package_version_dict['version'],
+        'version_tag': package_version_dict['version'],
         'endpoints': [str(r) for r in get_apiv0_rules()],
         'docs_url': docs_url
     }
@@ -119,7 +119,8 @@ def page_not_found(abort_error):
         return render_template('404.html',
                                rules=get_apiv0_rules(),
                                docs_url=docs_url,
-                               error=abort_error
+                               error=abort_error,
+                               endpoints=[str(r) for r in get_apiv0_rules()],
                                ), abort_error.code
     else:
 
