@@ -2,8 +2,9 @@ from voeventdb.server.tests.fixtures import packetgen
 from voeventdb.server.tests.fixtures.testpacket_id import testpacket_identity
 from datetime import datetime, timedelta
 import voeventparse as vp
+import pytz
 
-default_start_dt = datetime(2015, 1, 1)
+default_start_dt = datetime(2015, 1, 1, tzinfo=pytz.UTC)
 
 def heartbeat_packets(start=default_start_dt,
                       interval=timedelta(minutes=15),
