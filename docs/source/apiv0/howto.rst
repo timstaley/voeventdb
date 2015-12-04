@@ -117,6 +117,8 @@ query-keys (i.e. in the query-string) to control this:
     :members:
     :undoc-members:
 
+.. _ordervalues:
+
 .. autoclass:: voeventdb.server.restapi.v0.definitions.OrderValues
     :members:
     :undoc-members:
