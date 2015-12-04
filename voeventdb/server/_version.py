@@ -37,7 +37,7 @@ def get_config():
     cfg.VCS = "git"
     cfg.style = "pep440"
     cfg.tag_prefix = ""
-    cfg.parentdir_prefix = "voeventdb-"
+    cfg.parentdir_prefix = "voeventdb.server-"
     cfg.versionfile_source = "voeventdb/server/_version.py"
     cfg.verbose = False
     return cfg
