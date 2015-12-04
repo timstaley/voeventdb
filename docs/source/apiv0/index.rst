@@ -1,7 +1,7 @@
-.. _apiv0:
+.. _apiv0_ref:
 
 REST API v0 (``apiv0``) reference
-=================================
+##################################
 
 
 .. toctree::
@@ -10,5 +10,6 @@ REST API v0 (``apiv0``) reference
     howto
     endpoints
     queryfilters
+
 
 

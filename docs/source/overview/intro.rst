@@ -80,7 +80,7 @@ or jump straight to the relevant
 
 If you would like to access the REST API directly, our copy of voeventdb
 is hosted and documented at http://voeventdb.4pisky.org/. You can find
-reference information on how to form your http-queries :ref:`here <apiv0>`.
+reference information on how to form your http-queries :ref:`here <apiv0_ref>`.
 
 If you want to run a local copy of voeventdb, or contribute to voeventdb's
 development, see :ref:`installation`.

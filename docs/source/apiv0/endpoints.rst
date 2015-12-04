@@ -1,4 +1,4 @@
-.. _endpoints:
+.. _apiv0_endpoints:
 
 Endpoints
 ---------
@@ -11,3 +11,4 @@ entry in the JSON-dict. See :ref:`returned-content` for details.
 
 .. autoflask:: voeventdb.server.restapi.app:app
     :blueprints: apiv0
+

@@ -1,9 +1,7 @@
-
-.. _querying:
+.. _apiv0_howto:
 
 Querying the REST API
 =====================
-
 The voeventdb web-interface is designed around widely used RESTful_ concepts,
 which means (simplifying grossly) that all the details of your data query are
 encoded in an HTTP URL. By making requests at that URL, you get back the data
@@ -19,11 +17,13 @@ library such as Python's requests_. [#client]_
 .. _JSON: https://en.wikipedia.org/wiki/JSON
 .. _requests: http://docs.python-requests.org/
 
+
 Finding and using endpoints
 ----------------------------
 
-The base URLs which represent different queries are known as 'endpoints' -
-full listings for voeventdb can be found on the :ref:`endpoints` page.
+The base URLs which represent different queries are known as endpoints -
+full listings for voeventdb can be found on the
+:ref:`apiv0_endpoints` page.
 Some useful places to start are the
 `root <endpoints.html#get--apiv0->`_ endpoint, which provides a concise listing
 of the endpoints available, and the
@@ -40,7 +40,7 @@ By default, most endpoints return data on *all* VOEvents
 currently stored in the database. [#notalldata]_
 To narrow down your query to a specific subset of the VOEvents,
 you can apply a selection of the available filters listed on the
-:ref:`filters` page.
+:ref:`apiv0_filters` page.
 Filters are applied by adding key-value pairs as part of the
 `query-string`_ in your HTTP request.
 
@@ -51,7 +51,7 @@ packets stored since the start of November 2015, which have been assigned the
 http://voeventdb.4pisky.org/apiv0/count?authored_since=2015-11&role=observation
 
 Though typically you would let your scripting library do the job of stitching
-together the various parts. See the :ref:`filters` page for more details.
+together the various parts. See the :ref:`apiv0_filters` page for more details.
 
 .. note::
 

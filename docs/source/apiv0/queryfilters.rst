@@ -1,4 +1,4 @@
-.. _filters:
+.. _apiv0_filters:
 
 Query filters
 ---------------------------

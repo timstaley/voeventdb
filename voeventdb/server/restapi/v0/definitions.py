@@ -108,7 +108,7 @@ class PaginationKeys:
 
 class ResultKeys:
     """
-    Most :ref:`endpoints <endpoints>` return a JSON-encoded dictionary.
+    Most :ref:`endpoints <apiv0_endpoints>` return a JSON-encoded dictionary.
     [#ApartFromXml]_
 
     At the top level, the dictionary will contain some or all of the following
@@ -146,7 +146,7 @@ class ResultKeys:
     The data returned by your query, either in dictionary
     or list format according to the endpoint.
 
-    See :ref:`endpoint listings <endpoints>` for detail.
+    See :ref:`endpoint listings <apiv0_endpoints>` for detail.
     """
 
     url = 'url'

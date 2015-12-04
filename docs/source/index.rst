@@ -7,7 +7,7 @@ Version |version|
 Contents:
 
 .. toctree::
-    :maxdepth: 0
+    :maxdepth: 2
 
     overview/index
     apiv0/index
