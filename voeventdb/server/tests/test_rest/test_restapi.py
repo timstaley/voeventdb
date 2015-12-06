@@ -14,7 +14,6 @@ import urllib
 from flask import url_for
 
 
-
 @pytest.mark.usefixtures('fixture_db_session')
 class TestWithEmptyDatabase:
     @pytest.fixture(autouse=True)
@@ -143,8 +142,8 @@ class TestWithSimpleDatabase:
         with self.c as c:
             url = url_for(
                 apiv0.name + '.' + views.IvornReferenceCount.view_name,
-                **{PaginationKeys.order:OrderValues.id}
-                )
+                **{PaginationKeys.order: OrderValues.id}
+            )
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -153,7 +152,7 @@ class TestWithSimpleDatabase:
         assert sum(counts) == simple_populated_db.n_citations
         for ivorn, refcount in ivorn_refcounts:
             assert bool(refcount) == (
-            ivorn in simple_populated_db.followup_packets)
+                ivorn in simple_populated_db.followup_packets)
 
     def test_cited_counts(self, simple_populated_db):
         dbinf = simple_populated_db
@@ -208,7 +207,8 @@ class TestWithSimpleDatabase:
 
         # Negative case, IVORN present but packet contains no references
         all_ivorns = set(simple_populated_db.packet_dict.keys())
-        ivorns_wo_refs = list(all_ivorns - simple_populated_db.followup_packets)
+        ivorns_wo_refs = list(
+            all_ivorns - set(simple_populated_db.followup_packets))
         ivorn = ivorns_wo_refs[0]
         url = ep_url + urllib.quote_plus(ivorn)
         rv = self.c.get(url)
@@ -219,7 +219,7 @@ class TestWithSimpleDatabase:
 
         # Find packet which cites a SWIFT GRB, check URLs looked up correctly:
         url = url_for(apiv0.name + '.' + views.IvornList.view_name,
-                      **{filters.RefContains.querystring_key : 'BAT_GRB'}
+                      **{filters.RefContains.querystring_key: 'BAT_GRB'}
                       )
         rv = self.c.get(url)
         match_ivorns = json.loads(rv.data)[ResultKeys.result]

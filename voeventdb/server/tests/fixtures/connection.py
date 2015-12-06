@@ -77,7 +77,7 @@ class SimpleDbFixture:
         self.n_citations += 1
         # self.cited.add(ref_ivorn)
         self.cite_counts[ref_ivorn] = self.cite_counts[ref_ivorn] + 1
-        self.followup_packets.add(packet.attrib['ivorn'])
+        self.followup_packets.append(packet.attrib['ivorn'])
         vp.add_citations(packet,
                          vp.Citation(
                              ref_ivorn,
@@ -98,7 +98,7 @@ class SimpleDbFixture:
         # Count times ivorn referenced by other packets in db :
         self.cite_counts = defaultdict(int)
         # Packets containing at least one cite entry
-        self.followup_packets = set()
+        self.followup_packets = []
         # Total number of citations (one packet may have multiple cite entries)
         self.n_citations = 0
 
