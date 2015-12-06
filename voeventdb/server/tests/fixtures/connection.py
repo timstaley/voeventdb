@@ -9,7 +9,8 @@ from voeventdb.server.database.config import default_admin_db_url, testdb_empty_
 from voeventdb.server.database import db_utils, session_registry, session_factory
 from voeventdb.server.database.models import Base, Voevent
 import voeventdb.server.tests.fixtures.fake as fake
-from voeventdb.server.tests.resources import swift_bat_grb_655721
+from voeventdb.server.tests.resources import (swift_bat_grb_655721,
+                                              swift_xrt_grb_655721)
 
 from collections import defaultdict
 
@@ -87,7 +88,8 @@ class SimpleDbFixture:
 
     def __init__(self, fixture_db_session):
         s = fixture_db_session
-        packets = fake.heartbeat_packets(role=vp.definitions.roles.test)
+        packets = [swift_bat_grb_655721]
+        packets.extend(fake.heartbeat_packets(role=vp.definitions.roles.test))
 
         extra_packets = fake.heartbeat_packets(
             start=fake.default_start_dt + timedelta(hours=24),
@@ -114,8 +116,8 @@ class SimpleDbFixture:
         c2 = extra_packets[0].attrib['ivorn']
         self.add_reference(extra_packets[2],c2)
 
-        # Add a citation to a SWIFT GRB event (tests 'url annotation' func)
-        self.add_reference(extra_packets[3], swift_bat_grb_655721.attrib['ivorn'])
+        # Add a citation to an external packet
+        self.add_reference(extra_packets[3], swift_xrt_grb_655721.attrib['ivorn'])
 
         packets.extend(extra_packets)
         self.packet_dict = { pkt.attrib['ivorn'] : pkt for pkt in packets }

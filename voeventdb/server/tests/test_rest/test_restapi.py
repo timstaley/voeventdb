@@ -12,6 +12,8 @@ import voeventdb.server.restapi.v0.filters as filters
 import json
 import urllib
 from flask import url_for
+import iso8601
+
 
 
 @pytest.mark.usefixtures('fixture_db_session')
@@ -63,20 +65,23 @@ class TestWithSimpleDatabase:
         dbinf = simple_populated_db
         pkt_index = 6
         pkt = simple_populated_db.insert_packets[pkt_index]
-        authored_until_dt = pkt.Who.Date
+        authored_until_dt = iso8601.parse_date(pkt.Who.Date.text)
+        qualifying_packets = [
+            p for p in dbinf.insert_packets
+            if iso8601.parse_date(p.Who.Date.text) <= authored_until_dt]
 
         qry_url = url_for(apiv0.name + '.' + views.Count.view_name,
-                          authored_until=authored_until_dt)
+                          authored_until=authored_until_dt.isoformat())
         with self.c as c:
             rv = self.c.get(qry_url)
             # print "ARGS:", request.args
 
         assert rv.status_code == 200
         rd = json.loads(rv.data)
-        assert rd[
-                   ResultKeys.result] == pkt_index + 1  # date bounds are inclusive
+        assert len(qualifying_packets)
+        assert rd[ResultKeys.result] == len(qualifying_packets)  # date bounds are inclusive
         assert rd[ResultKeys.querystring] == dict(
-            authored_until=[authored_until_dt, ])
+            authored_until=[authored_until_dt.isoformat(), ])
 
     def test_count_w_multiquery(self, simple_populated_db):
         dbinf = simple_populated_db
@@ -218,15 +223,27 @@ class TestWithSimpleDatabase:
         assert len(full['refs']) == 0
 
         # Find packet which cites a SWIFT GRB, check URLs looked up correctly:
+        ref_string = 'BAT_GRB'
         url = url_for(apiv0.name + '.' + views.IvornList.view_name,
-                      **{filters.RefContains.querystring_key: 'BAT_GRB'}
+                      **{filters.RefContains.querystring_key: ref_string}
                       )
         rv = self.c.get(url)
-        match_ivorns = json.loads(rv.data)[ResultKeys.result]
-        assert len(match_ivorns) == 1
-        url = ep_url + urllib.quote_plus(match_ivorns[0])
+        ref_lists = [ Cite.from_etree(p)
+                    for p in simple_populated_db.insert_packets
+                    if Cite.from_etree(p)]
+        matches = []
+        for rl in ref_lists:
+            for r in rl:
+                if ref_string in r.ref_ivorn:
+                    matches.append(r)
+                    continue
+        matched_via_restapi = json.loads(rv.data)[ResultKeys.result]
+        assert len(matched_via_restapi) == len(matches)
+        url = ep_url + urllib.quote_plus(matched_via_restapi[0])
         rv = self.c.get(url)
         rd = json.loads(rv.data)[ResultKeys.result]
+        # When referencing a Swift alert, we should annotate for two urls,
+        # GCN.gsfc.nasa.gov / www.swift.ac.uk
         assert len(rd['relevant_urls']) == 2
 
 

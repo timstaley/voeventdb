@@ -183,10 +183,13 @@ class RefAny(QueryFilter):
     """
     Return only VOEvents which have / do not have references to other VOEvents.
 
-    Applied via query-strings ``refs=true`` or ``refs=false``
+    Applied via query-strings ``refs=true`` or ``refs=false``.
+    NB 'true'/'false' string-values are case-insensitive, so e.g.
+    'true', 'True', 'TRUE', 'tRUe' are all valid.
     """
     querystring_key = 'ref'
     example_values = ['true',
+                      'True',
                       'false'
                       ]
 

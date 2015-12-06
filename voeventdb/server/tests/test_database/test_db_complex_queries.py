@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 from voeventdb.server.database.convenience import ivorn_present, safe_insert_voevent
 import voeventdb.server.database.convenience as convenience
@@ -35,10 +35,9 @@ class TestConvenienceFuncs:
 
     def test_stream_count(self, fixture_db_session, simple_populated_db):
         sc = dict(query.stream_counts_q(fixture_db_session).all())
-        assert len(sc) == 1
+        assert len(sc) == len(simple_populated_db.stream_set)
 
-        assert sc == {simple_populated_db.streams[0]:
-                          simple_populated_db.n_inserts}
+        assert sum(sc.values()) == simple_populated_db.n_inserts
 
     def test_stream_count_with_role(self, fixture_db_session,
                                     simple_populated_db):
@@ -50,11 +49,12 @@ class TestConvenienceFuncs:
         q = query.stream_counts_role_breakdown_q(fixture_db_session)
         rb = convenience.to_nested_dict(q.all())
         assert len(rb) == len(simple_populated_db.stream_set)
-        # Currently assume the simple testdb uses only one stream throughout:
-        assert len(simple_populated_db.stream_set) == 1
-        # Which means we only need to look at the first value:
-        stream_rolecounts = rb.values()[0]
-        assert len(stream_rolecounts) == len(simple_populated_db.role_set)
+        n_total_ivorn = 0
+        for stream_breakdown in rb.values():
+            for role_count in stream_breakdown.values():
+                n_total_ivorn +=role_count
+        assert n_total_ivorn == simple_populated_db.n_inserts
+
 
 
 class TestCitationQueries:

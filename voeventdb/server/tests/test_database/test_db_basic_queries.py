@@ -4,7 +4,6 @@ from voeventdb.server.database.models import Voevent
 import pytest
 
 
-
 class TestBasicInsertsAndQueries:
     """
     Basic sanity checks. Serve as SQLAlchemy examples as much as anything.
@@ -15,7 +14,7 @@ class TestBasicInsertsAndQueries:
         dbinf = simple_populated_db
         inserted = s.query(Voevent).all()
         assert len(inserted) == len(dbinf.insert_packets)
-        pkt_ivorns = [p.attrib['ivorn'] for p in dbinf.insert_packets]
+        pkt_ivorns = [i.attrib['ivorn'] for i in dbinf.insert_packets]
         inserted_ivorns = [v.ivorn for v in inserted]
         assert pkt_ivorns == inserted_ivorns
 
@@ -28,12 +27,18 @@ class TestBasicInsertsAndQueries:
             Voevent.ivorn == dbinf.absent_ivorn).count()
 
         # Test 'IVORN.startswith(prefix)' equivalent
-        assert dbinf.n_inserts == s.query(Voevent.ivorn).filter(
-            Voevent.ivorn.like('ivo://voevent.organization.tld/TEST%')).count()
+        prefix_str = "ivo://voevent.organization.tld/TEST"
+        n_matches = len([i for i in dbinf.inserted_ivorns
+                         if i.startswith(prefix_str)])
+        assert n_matches == s.query(Voevent.ivorn).filter(
+            Voevent.ivorn.like('{}%'.format(prefix_str))).count()
 
         # Test 'substr in IVORN' equivalent
-        assert dbinf.n_inserts == s.query(Voevent.ivorn).filter(
-            Voevent.ivorn.like('%voevent.organization.tld/TEST%')).count()
+        substr = "voevent.organization.tld/TEST"
+        n_matches = len([i for i in dbinf.inserted_ivorns
+                         if substr in i])
+        assert n_matches == s.query(Voevent.ivorn).filter(
+            Voevent.ivorn.like('%{}%'.format(substr))).count()
 
     def test_xml_round_trip(self, fixture_db_session, simple_populated_db):
         "Sanity check that XML is not corrupted or prefixed or re-encoded etc"
