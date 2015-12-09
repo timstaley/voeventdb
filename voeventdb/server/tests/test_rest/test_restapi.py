@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 import pytest
 from voeventdb.server.database.models import Cite
-from voeventdb.server.restapi.v0.views import apiv0
-from voeventdb.server.restapi.v0.definitions import (
+from voeventdb.server.restapi.v1.views import apiv1
+from voeventdb.server.restapi.v1.definitions import (
     OrderValues,
     PaginationKeys,
     ResultKeys,
 )
-import voeventdb.server.restapi.v0.views as views
-import voeventdb.server.restapi.v0.filters as filters
+import voeventdb.server.restapi.v1.views as views
+import voeventdb.server.restapi.v1.filters as filters
 import json
 import urllib
 from flask import url_for
@@ -27,22 +27,22 @@ class TestWithEmptyDatabase:
         assert rv.status_code == 404
 
     def test_api_root(self):
-        rv = self.c.get(apiv0.url_prefix + '/')
+        rv = self.c.get(apiv1.url_prefix + '/')
         assert rv.status_code == 200
 
     def test_api_count(self):
-        rv = self.c.get(url_for(apiv0.name + '.' + views.Count.view_name))
+        rv = self.c.get(url_for(apiv1.name + '.' + views.Count.view_name))
         rd = json.loads(rv.data)
         assert rv.status_code == 200
         assert rv.mimetype == 'application/json'
         assert rd[ResultKeys.result] == 0
 
     def test_no_ivorn(self):
-        rv = self.c.get(url_for(apiv0.name + '.xml_view'))
+        rv = self.c.get(url_for(apiv1.name + '.xml_view'))
         assert rv.status_code == 400
 
     def test_ivorn_not_found(self):
-        rv = self.c.get(url_for(apiv0.name + '.xml_view') +
+        rv = self.c.get(url_for(apiv1.name + '.xml_view') +
                         urllib.quote_plus('foobar_invalid_ivorn'))
         assert rv.status_code == 422
 
@@ -54,7 +54,7 @@ class TestWithSimpleDatabase:
 
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
-        rv = self.c.get(url_for(apiv0.name + '.' + views.Count.view_name))
+        rv = self.c.get(url_for(apiv1.name + '.' + views.Count.view_name))
         rd = json.loads(rv.data)
         # print rd
         assert rv.status_code == 200
@@ -70,7 +70,7 @@ class TestWithSimpleDatabase:
             p for p in dbinf.insert_packets
             if iso8601.parse_date(p.Who.Date.text) <= authored_until_dt]
 
-        qry_url = url_for(apiv0.name + '.' + views.Count.view_name,
+        qry_url = url_for(apiv1.name + '.' + views.Count.view_name,
                           authored_until=authored_until_dt.isoformat())
         with self.c as c:
             rv = self.c.get(qry_url)
@@ -86,7 +86,7 @@ class TestWithSimpleDatabase:
     def test_count_w_multiquery(self, simple_populated_db):
         dbinf = simple_populated_db
         qry_url = (
-            url_for(apiv0.name + '.' + views.Count.view_name)
+            url_for(apiv1.name + '.' + views.Count.view_name)
             + '?' +
             urllib.urlencode((('role', 'test'),
                               ('role', 'utility'),
@@ -99,7 +99,7 @@ class TestWithSimpleDatabase:
 
     def test_ivornlist(self, simple_populated_db):
         dbinf = simple_populated_db
-        ivorn_list_url = url_for(apiv0.name + '.' + views.IvornList.view_name)
+        ivorn_list_url = url_for(apiv1.name + '.' + views.IvornList.view_name)
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -123,7 +123,7 @@ class TestWithSimpleDatabase:
         result_sets = []
         for _ in range(10):
             with self.c as c:
-                url = url_for(apiv0.name + '.' + views.IvornList.view_name,
+                url = url_for(apiv1.name + '.' + views.IvornList.view_name,
                               limit=3,
                               ivorn_contains='TEST')
                 # print "URL", url
@@ -146,7 +146,7 @@ class TestWithSimpleDatabase:
         """
         with self.c as c:
             url = url_for(
-                apiv0.name + '.' + views.IvornReferenceCount.view_name,
+                apiv1.name + '.' + views.IvornReferenceCount.view_name,
                 **{PaginationKeys.order: OrderValues.id}
             )
             rv = self.c.get(url)
@@ -168,7 +168,7 @@ class TestWithSimpleDatabase:
                 n_internal_citations += count
 
         with self.c as c:
-            url = url_for(apiv0.name + '.' + views.IvornCitedCount.view_name)
+            url = url_for(apiv1.name + '.' + views.IvornCitedCount.view_name)
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -179,14 +179,14 @@ class TestWithSimpleDatabase:
             assert citecount == dbinf.cite_counts[ivorn]
 
     def test_xml_retrieval(self, simple_populated_db):
-        url = url_for(apiv0.name + '.xml_view')
+        url = url_for(apiv1.name + '.xml_view')
         url += urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         present_ivorn = simple_populated_db.inserted_ivorns[0]
         present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
-        url = url_for(apiv0.name + '.xml_view')
+        url = url_for(apiv1.name + '.xml_view')
         url += urllib.quote_plus(present_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
@@ -195,7 +195,7 @@ class TestWithSimpleDatabase:
 
     def test_synopsis_view(self, simple_populated_db):
         # Null case, ivorn not in DB:
-        ep_url = url_for(apiv0.name + '.synopsis_view')
+        ep_url = url_for(apiv1.name + '.synopsis_view')
         url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
@@ -224,7 +224,7 @@ class TestWithSimpleDatabase:
 
         # Find packet which cites a SWIFT GRB, check URLs looked up correctly:
         ref_string = 'BAT_GRB'
-        url = url_for(apiv0.name + '.' + views.IvornList.view_name,
+        url = url_for(apiv1.name + '.' + views.IvornList.view_name,
                       **{filters.RefContains.querystring_key: ref_string}
                       )
         rv = self.c.get(url)

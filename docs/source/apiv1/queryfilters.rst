@@ -1,4 +1,4 @@
-.. _apiv0_filters:
+.. _apiv1_filters:
 
 Query filters
 ---------------------------
@@ -12,7 +12,7 @@ These filters can be applied by providing key-value pairs as part of the
 .. _query string: https://en.wikipedia.org/wiki/Query_string
 
 
-.. automodule:: voeventdb.server.restapi.v0.filters
+.. automodule:: voeventdb.server.restapi.v1.filters
     :members:
     :undoc-members:
     :member-order: bysource

@@ -8,14 +8,14 @@ from sqlalchemy import engine
 from flask import Flask, send_from_directory
 
 from voeventdb.server.database import session_registry
-from voeventdb.server.restapi.v0.views import apiv0
-import voeventdb.server.restapi.v0.filters
-from voeventdb.server.restapi.v0.jsonencoder import IsodatetimeJSONEncoder
+from voeventdb.server.restapi.v1.views import apiv1
+import voeventdb.server.restapi.v1.filters
+from voeventdb.server.restapi.v1.jsonencoder import IsodatetimeJSONEncoder
 from voeventdb.server.database.config import testdb_corpus_url
 
 app = Flask(__name__)
 app.config.from_object('voeventdb.server.restapi.default_config')
-app.register_blueprint(apiv0)
+app.register_blueprint(apiv1)
 
 
 # restless_manager.init_app(app, session=session_registry)

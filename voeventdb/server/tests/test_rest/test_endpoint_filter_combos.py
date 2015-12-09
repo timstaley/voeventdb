@@ -1,8 +1,8 @@
 from __future__ import print_function
 import pytest
 import voeventdb.server.restapi.inspection_utils as iu
-from voeventdb.server.restapi.v0.views import apiv0
-from voeventdb.server.restapi.v0.viewbase import OrderValues, PaginationKeys
+from voeventdb.server.restapi.v1.views import apiv1
+from voeventdb.server.restapi.v1.viewbase import OrderValues, PaginationKeys
 import logging
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def runtests(flask_test_client,
     """
     Define the test code once, use it twice - with empty / populated databases
     """
-    url = url_for(apiv0.name+'.'+view_name,
+    url = url_for(apiv1.name+'.'+view_name,
                     **{filter_key:filter_value})
     with flask_test_client as c:
         rv = c.get(url)
@@ -42,7 +42,7 @@ def runtests(flask_test_client,
     ## Test pagination /ordering works too, if it's a list view:
     if view_name in lqv_views:
         for orderby_value in OrderValues._value_list:
-            url = url_for(apiv0.name+'.'+view_name,
+            url = url_for(apiv1.name+'.'+view_name,
                         **{filter_key:filter_value,
                            PaginationKeys.limit: 10,
                            PaginationKeys.offset:5,

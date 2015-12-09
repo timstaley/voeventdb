@@ -1,6 +1,6 @@
-.. _apiv0_ref:
+.. _apiv1_ref:
 
-REST API v0 (``apiv0``) reference
+REST API v1 (``apiv1``) reference
 ##################################
 
 

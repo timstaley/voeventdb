@@ -12,34 +12,34 @@ from voeventdb.server.restapi.annotate import lookup_relevant_urls
 from voeventdb.server.database import session_registry as db_session
 from voeventdb.server.database.models import Voevent, Cite, Coord
 import voeventdb.server.database.convenience as convenience
-import voeventdb.server.restapi.v0.apierror as apierror
+import voeventdb.server.restapi.v1.apierror as apierror
 import voeventdb.server.database.query as query
-from voeventdb.server.restapi.v0.viewbase import (
+from voeventdb.server.restapi.v1.viewbase import (
     QueryView, ListQueryView, _add_to_api, make_response_dict
 )
 
 
 # This import may look unused, but activates the filter registry -
 # Do not delete!
-import voeventdb.server.restapi.v0.filters
+import voeventdb.server.restapi.v1.filters
 
-apiv0 = Blueprint('apiv0', __name__,
-                  url_prefix='/apiv0')
+apiv1 = Blueprint('apiv1', __name__,
+                  url_prefix='/apiv1')
 
 
 # First define a few helper functions...
 
-def add_to_apiv0(queryview_class):
+def add_to_apiv1(queryview_class):
     """
     Partially bind the 'add_to_api' wrapper so we can use it as a decorator.
     """
-    return _add_to_api(queryview_class, apiv0)
+    return _add_to_api(queryview_class, apiv1)
 
 
-def get_apiv0_rules():
+def get_apiv1_rules():
     rules = [r for r in sorted(current_app.url_map.iter_rules(),
                                key=lambda x: str(x))
-             if r.endpoint.startswith('apiv0')]
+             if r.endpoint.startswith('apiv1')]
     endpoints_listed = set()
     pruned_rules = []
     for r in rules:
@@ -74,20 +74,22 @@ def validate_ivorn(url_encoded_ivorn):
 # Now root url, error handlers:
 
 
-@apiv0.route('/')
-def apiv0_root_view():
+@apiv1.route('/')
+def apiv1_root_view():
     """
     API root url. Shows a list of active endpoints.
     """
     docs_url = current_app.config.get('DOCS_URL',
                                       'http://' + request.host + '/docs')
-    message = "Welcome to the voeventdb REST API!"
+    message = "Welcome to the voeventdb REST API, " \
+              "interface version '{}'.".format(
+                                                                apiv1.name)
     api_details = {
         'message': message,
-        'api_version': apiv0.name,
+        'api_version': apiv1.name,
         'git_sha': package_version_dict['full-revisionid'][:8],
         'version_tag': package_version_dict['version'],
-        'endpoints': [str(r) for r in get_apiv0_rules()],
+        'endpoints': [str(r) for r in get_apiv1_rules()],
         'docs_url': docs_url
     }
 
@@ -99,9 +101,9 @@ def apiv0_root_view():
         return jsonify(api_details)
 
 
-@apiv0.errorhandler(apierror.InvalidQueryString)
-@apiv0.errorhandler(apierror.IvornNotFound)
-@apiv0.errorhandler(apierror.IvornNotSupplied)
+@apiv1.errorhandler(apierror.InvalidQueryString)
+@apiv1.errorhandler(apierror.IvornNotFound)
+@apiv1.errorhandler(apierror.IvornNotSupplied)
 def ivorn_error(error):
     if 'text/html' in request.headers.get("Accept", ""):
         return render_template('errorbase.html',
@@ -111,16 +113,16 @@ def ivorn_error(error):
         return jsonify(error_to_dict(error)), error.code
 
 
-@apiv0.app_errorhandler(404)
+@apiv1.app_errorhandler(404)
 def page_not_found(abort_error):
     if 'text/html' in request.headers.get("Accept", ""):
         docs_url = current_app.config.get('DOCS_URL',
                                           'http://' + request.host + '/docs')
         return render_template('404.html',
-                               rules=get_apiv0_rules(),
+                               rules=get_apiv1_rules(),
                                docs_url=docs_url,
                                error=abort_error,
-                               endpoints=[str(r) for r in get_apiv0_rules()],
+                               endpoints=[str(r) for r in get_apiv1_rules()],
                                ), abort_error.code
     else:
 
@@ -131,7 +133,7 @@ def page_not_found(abort_error):
 # Alphabetically ordered endpoints from here on
 # -----------------------------------------------
 
-@add_to_apiv0
+@add_to_apiv1
 class AuthoredMonthCount(QueryView):
     """
     Result:
@@ -159,7 +161,7 @@ class AuthoredMonthCount(QueryView):
         return dict(converted_results)
 
 
-@add_to_apiv0
+@add_to_apiv1
 class Count(QueryView):
     """
     Result (int):
@@ -176,7 +178,7 @@ class Count(QueryView):
         return q.count()
 
 
-@add_to_apiv0
+@add_to_apiv1
 class IvornList(ListQueryView):
     """
     Result (list of strings):
@@ -201,7 +203,7 @@ class IvornList(ListQueryView):
             return raw_results
 
 
-@add_to_apiv0
+@add_to_apiv1
 class IvornReferenceCount(ListQueryView):
     """
     Result (list of 2-element lists):
@@ -221,7 +223,7 @@ class IvornReferenceCount(ListQueryView):
         return [tuple(r) for r in query.all()]
 
 
-@add_to_apiv0
+@add_to_apiv1
 class IvornCitedCount(ListQueryView):
     """
     Result (list of 2-element lists):
@@ -241,7 +243,7 @@ class IvornCitedCount(ListQueryView):
         return [tuple(r) for r in query.all()]
 
 
-@add_to_apiv0
+@add_to_apiv1
 class RoleCount(QueryView):
     """
     Result:
@@ -256,7 +258,7 @@ class RoleCount(QueryView):
         return dict(q.all())
 
 
-@add_to_apiv0
+@add_to_apiv1
 class StreamCount(QueryView):
     """
     Result:
@@ -271,7 +273,7 @@ class StreamCount(QueryView):
         return dict(q.all())
 
 
-@add_to_apiv0
+@add_to_apiv1
 class StreamRoleCount(QueryView):
     """
     Result:
@@ -286,8 +288,8 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
-@apiv0.route('/synopsis/')
-@apiv0.route('/synopsis/<path:url_encoded_ivorn>')
+@apiv1.route('/synopsis/')
+@apiv1.route('/synopsis/<path:url_encoded_ivorn>')
 def synopsis_view(url_encoded_ivorn=None):
     """
     Result:
@@ -357,8 +359,8 @@ def synopsis_view(url_encoded_ivorn=None):
     return jsonify(make_response_dict(result))
 
 
-@apiv0.route('/xml/')
-@apiv0.route('/xml/<path:url_encoded_ivorn>')
+@apiv1.route('/xml/')
+@apiv1.route('/xml/<path:url_encoded_ivorn>')
 def xml_view(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.

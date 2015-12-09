@@ -1,4 +1,4 @@
-.. _apiv0_howto:
+.. _apiv1_howto:
 
 Querying the REST API
 =====================
@@ -23,11 +23,11 @@ Finding and using endpoints
 
 The base URLs which represent different queries are known as endpoints -
 full listings for voeventdb can be found on the
-:ref:`apiv0_endpoints` page.
+:ref:`apiv1_endpoints` page.
 Some useful places to start are the
-`root <endpoints.html#get--apiv0->`_ endpoint, which provides a concise listing
+`root <endpoints.html#get--apiv1->`_ endpoint, which provides a concise listing
 of the endpoints available, and the
-`stream count <endpoints.html#get--apiv0-stream_count>`_ endpoint, which
+`stream count <endpoints.html#get--apiv1-stream_count>`_ endpoint, which
 serves as a sort of 'contents' page for the database.
 
 
@@ -40,7 +40,7 @@ By default, most endpoints return data on *all* VOEvents
 currently stored in the database. [#notalldata]_
 To narrow down your query to a specific subset of the VOEvents,
 you can apply a selection of the available filters listed on the
-:ref:`apiv0_filters` page.
+:ref:`apiv1_filters` page.
 Filters are applied by adding key-value pairs as part of the
 `query-string`_ in your HTTP request.
 
@@ -48,29 +48,29 @@ For example, to return a count of the
 packets stored since the start of November 2015, which have been assigned the
 'observation' role, you can form an HTTP address like:
 
-http://voeventdb.4pisky.org/apiv0/count?authored_since=2015-11&role=observation
+http://voeventdb.4pisky.org/apiv1/count?authored_since=2015-11&role=observation
 
 Though typically you would let your scripting library do the job of stitching
-together the various parts. See the :ref:`apiv0_filters` page for more details.
+together the various parts. See the :ref:`apiv1_filters` page for more details.
 
 .. note::
 
     You can apply any filter (or combination of filters) to any endpoint, so
     (for example)
 
-    http://voeventdb.4pisky.org/apiv0/stream_count?authored_since=2015-11&role=observation
+    http://voeventdb.4pisky.org/apiv1/stream_count?authored_since=2015-11&role=observation
 
-    is also a valid query-URL (where we have replaced the ``/apiv0/count``
-    endpoint with ``/apiv0/stream_count``).
+    is also a valid query-URL (where we have replaced the ``/apiv1/count``
+    endpoint with ``/apiv1/stream_count``).
 
 
 
 
 
 .. [#notalldata] The exceptions are the
-    `synopsis <endpoints.html#get--apiv0-synopsis->`_
+    `synopsis <endpoints.html#get--apiv1-synopsis->`_
     and
-    `XML <endpoints.html#get--apiv0-xml->`_
+    `XML <endpoints.html#get--apiv1-xml->`_
     endpoints, which are intended to retrieve data pertaining to a single
     VOEvent.
 
@@ -85,9 +85,9 @@ URL-Encoding
 -------------
 
 Note that if you are accessing the
-`packet-detail <endpoints.html#get--apiv0-full->`_
+`packet-detail <endpoints.html#get--apiv1-full->`_
 or
-`XML <endpoints.html#get--apiv0-xml->`_
+`XML <endpoints.html#get--apiv1-xml->`_
 endpoints, or specifying a query-filter value which contains the ``#``
 character, then you will need to use `URL-encoding <URL-encode_>`_ (because otherwise the
 query-value is indistinguishable from an incorrectly-formed URL). It's simple to
@@ -113,13 +113,13 @@ of data. You can use pagination-keys in the same manner as
 query-keys (i.e. in the query-string) to control this:
 
 
-.. autoclass:: voeventdb.server.restapi.v0.definitions.PaginationKeys
+.. autoclass:: voeventdb.server.restapi.v1.definitions.PaginationKeys
     :members:
     :undoc-members:
 
 .. _ordervalues:
 
-.. autoclass:: voeventdb.server.restapi.v0.definitions.OrderValues
+.. autoclass:: voeventdb.server.restapi.v1.definitions.OrderValues
     :members:
     :undoc-members:
 
@@ -127,6 +127,6 @@ query-keys (i.e. in the query-string) to control this:
 
 Returned content
 ----------------
-.. autoclass:: voeventdb.server.restapi.v0.viewbase.ResultKeys
+.. autoclass:: voeventdb.server.restapi.v1.viewbase.ResultKeys
     :members:
     :undoc-members:

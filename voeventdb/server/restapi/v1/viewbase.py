@@ -9,14 +9,14 @@ from flask import (
 )
 
 from voeventdb.server.database.models import Voevent
-from voeventdb.server.restapi.v0.filter_base import apply_filters
-from voeventdb.server.restapi.v0.definitions import (
+from voeventdb.server.restapi.v1.filter_base import apply_filters
+from voeventdb.server.restapi.v1.definitions import (
     OrderValues,
     order_by_string_to_col_map,
     PaginationKeys,
     ResultKeys,
 )
-from voeventdb.server.restapi.v0.apierror import InvalidQueryString
+from voeventdb.server.restapi.v1.apierror import InvalidQueryString
 
 from sqlalchemy import asc, desc
 

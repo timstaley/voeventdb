@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from voeventdb.server.restapi.v0.apierror import InvalidQueryString
-from voeventdb.server.restapi.v0.definitions import PaginationKeys
+from voeventdb.server.restapi.v1.apierror import InvalidQueryString
+from voeventdb.server.restapi.v1.definitions import PaginationKeys
 
 """
 Define the underlying machinery we'll use to implement query filters.

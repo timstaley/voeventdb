@@ -108,7 +108,7 @@ class PaginationKeys:
 
 class ResultKeys:
     """
-    Most :ref:`endpoints <apiv0_endpoints>` return a JSON-encoded dictionary.
+    Most :ref:`endpoints <apiv1_endpoints>` return a JSON-encoded dictionary.
     [#ApartFromXml]_
 
     At the top level, the dictionary will contain some or all of the following
@@ -120,7 +120,7 @@ class ResultKeys:
         The key-strings can be imported and used in autocomplete-friendly
         fashion, for example::
 
-            from voeventdb.server.restapi.v0 import ResultKeys as rkeys
+            from voeventdb.server.restapi.v1 import ResultKeys as rkeys
             print rkeys.querystring
     """
     endpoint = 'endpoint'
@@ -146,7 +146,7 @@ class ResultKeys:
     The data returned by your query, either in dictionary
     or list format according to the endpoint.
 
-    See :ref:`endpoint listings <apiv0_endpoints>` for detail.
+    See :ref:`endpoint listings <apiv1_endpoints>` for detail.
     """
 
     url = 'url'

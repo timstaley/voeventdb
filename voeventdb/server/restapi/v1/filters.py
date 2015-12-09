@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from voeventdb.server.database.models import Voevent, Cite, Coord
 from voeventdb.server.database.query import coord_cone_search_clause
-import voeventdb.server.restapi.v0.apierror as apierror
-from voeventdb.server.restapi.v0.filter_base import (
+import voeventdb.server.restapi.v1.apierror as apierror
+from voeventdb.server.restapi.v1.filter_base import (
     add_to_filter_registry, QueryFilter)
 import iso8601
 from sqlalchemy import (or_, and_, exists,
