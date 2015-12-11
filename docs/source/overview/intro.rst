@@ -59,7 +59,7 @@ be summarised as follows:
     Narrow your query to a particular
     type of alert, limit it to packets authored between certain dates, only return
     events which are cited by others, return all events citing one particular
-    packet, etc etc. Queries and endpoints can be thought of as orthogonal_,
+    packet, etc etc. Filters and endpoints can be thought of as orthogonal_,
     i.e. the same filter-set can be applied to any endpoint.
  - Loading / dumping of XML packets in plain-old-tarballs
     The package contains routines for handling BZ2-compressed tarballs containing
