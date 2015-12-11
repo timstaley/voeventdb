@@ -27,7 +27,7 @@ full listings for voeventdb can be found on the
 Some useful places to start are the
 `root <endpoints.html#get--apiv1->`_ endpoint, which provides a concise listing
 of the endpoints available, and the
-`stream count <endpoints.html#get--apiv1-stream_count>`_ endpoint, which
+`stream count <endpoints.html#get--apiv1-map-stream_count>`_ endpoint, which
 serves as a sort of 'contents' page for the database.
 
 
@@ -68,11 +68,8 @@ together the various parts. See the :ref:`apiv1_filters` page for more details.
 
 
 .. [#notalldata] The exceptions are the
-    `synopsis <endpoints.html#get--apiv1-synopsis->`_
-    and
-    `XML <endpoints.html#get--apiv1-xml->`_
-    endpoints, which are intended to retrieve data pertaining to a single
-    VOEvent.
+    :ref:`single-packet endpoints<apiv1_packet_endpoints>`:,
+    which are intended to retrieve data pertaining to a single VOEvent.
 
 
 .. _query-string: https://en.wikipedia.org/wiki/Query_string
@@ -85,13 +82,11 @@ URL-Encoding
 -------------
 
 Note that if you are accessing the
-`packet-detail <endpoints.html#get--apiv1-full->`_
-or
-`XML <endpoints.html#get--apiv1-xml->`_
-endpoints, or specifying a query-filter value which contains the ``#``
+:ref:`single-packet endpoints<apiv1_packet_endpoints>`:,
+or specifying a query-filter value which contains the ``#``
 character, then you will need to use `URL-encoding <URL-encode_>`_ (because otherwise the
 query-value is indistinguishable from an incorrectly-formed URL). It's simple to
-manually URL-encode the value using a `web-based tool`_, or e.g. in
+URL-encode the value using a `web-based tool`_, or e.g. in
 Python::
 
     import urllib
