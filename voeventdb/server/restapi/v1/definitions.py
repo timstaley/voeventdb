@@ -41,26 +41,26 @@ class OrderValues:
     which in effect means that the first results to be loaded into the database
     are returned first.
 
-    Each value has a pairing with a '_desc' suffix, implying reverse
+    Each value has a pairing with a '-' prefix, implying reverse
     (descending) ordering.
 
     """
     author_datetime = 'author_datetime'
-    author_datetime_desc = 'author_datetime_desc'
+    author_datetime_desc = '-author_datetime'
     """
     Order results by author_datetime (timestamp from the *Who* section).
     Default ('ascending') implies oldest-first.
     """
 
     id = 'id'
-    id_desc = 'id_desc'
+    id_desc = '-id'
     """
     Order results by database-id (assigned as events are added to the database).
     This is the default setting.
     """
 
     ivorn = 'ivorn'
-    ivorn_desc = 'ivorn_desc'
+    ivorn_desc = '-ivorn'
     """
     Order results by ivorn (alphabetically).
     """

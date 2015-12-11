@@ -67,9 +67,9 @@ class ListQueryView(View):
                     reason="Not a valid ordering, try one of {}.".format(
                         OrderValues._value_list))
 
-            if order_stringval[-5:] == '_desc':
+            if order_stringval.startswith('-'):
                 ordering_func = desc
-                order_stringval = order_stringval[:-5]
+                order_stringval = order_stringval[1:]
 
         ordering_col = order_by_string_to_col_map[order_stringval]
         q = q.order_by(ordering_func(ordering_col))
