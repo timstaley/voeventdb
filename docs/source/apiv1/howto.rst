@@ -58,10 +58,10 @@ together the various parts. See the :ref:`apiv1_filters` page for more details.
     You can apply any filter (or combination of filters) to any endpoint, so
     (for example)
 
-    http://voeventdb.4pisky.org/apiv1/stream_count?authored_since=2015-11&role=observation
+    http://voeventdb.4pisky.org/apiv1/map/stream_count?authored_since=2015-11&role=observation
 
     is also a valid query-URL (where we have replaced the ``/apiv1/count``
-    endpoint with ``/apiv1/stream_count``).
+    endpoint with ``/apiv1/map/stream_count``).
 
 
 
