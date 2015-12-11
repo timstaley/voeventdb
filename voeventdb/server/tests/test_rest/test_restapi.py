@@ -38,11 +38,11 @@ class TestWithEmptyDatabase:
         assert rd[ResultKeys.result] == 0
 
     def test_no_ivorn(self):
-        rv = self.c.get(url_for(apiv1.name + '.xml_view'))
+        rv = self.c.get(url_for(apiv1.name + '.packet_xml'))
         assert rv.status_code == 400
 
     def test_ivorn_not_found(self):
-        rv = self.c.get(url_for(apiv1.name + '.xml_view') +
+        rv = self.c.get(url_for(apiv1.name + '.packet_xml') +
                         urllib.quote_plus('foobar_invalid_ivorn'))
         assert rv.status_code == 422
 
@@ -99,7 +99,7 @@ class TestWithSimpleDatabase:
 
     def test_ivornlist(self, simple_populated_db):
         dbinf = simple_populated_db
-        ivorn_list_url = url_for(apiv1.name + '.' + views.IvornList.view_name)
+        ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name)
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -123,7 +123,7 @@ class TestWithSimpleDatabase:
         result_sets = []
         for _ in range(10):
             with self.c as c:
-                url = url_for(apiv1.name + '.' + views.IvornList.view_name,
+                url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
                               limit=3,
                               ivorn_contains='TEST')
                 # print "URL", url
@@ -146,7 +146,7 @@ class TestWithSimpleDatabase:
         """
         with self.c as c:
             url = url_for(
-                apiv1.name + '.' + views.IvornReferenceCount.view_name,
+                apiv1.name + '.' + views.ListIvornReferenceCount.view_name,
                 **{PaginationKeys.order: OrderValues.id}
             )
             rv = self.c.get(url)
@@ -168,7 +168,7 @@ class TestWithSimpleDatabase:
                 n_internal_citations += count
 
         with self.c as c:
-            url = url_for(apiv1.name + '.' + views.IvornCitedCount.view_name)
+            url = url_for(apiv1.name + '.' + views.ListIvornCitedCount.view_name)
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -179,14 +179,14 @@ class TestWithSimpleDatabase:
             assert citecount == dbinf.cite_counts[ivorn]
 
     def test_xml_retrieval(self, simple_populated_db):
-        url = url_for(apiv1.name + '.xml_view')
+        url = url_for(apiv1.name + '.packet_xml')
         url += urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         present_ivorn = simple_populated_db.inserted_ivorns[0]
         present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
-        url = url_for(apiv1.name + '.xml_view')
+        url = url_for(apiv1.name + '.packet_xml')
         url += urllib.quote_plus(present_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
@@ -195,7 +195,7 @@ class TestWithSimpleDatabase:
 
     def test_synopsis_view(self, simple_populated_db):
         # Null case, ivorn not in DB:
-        ep_url = url_for(apiv1.name + '.synopsis_view')
+        ep_url = url_for(apiv1.name + '.packet_synopsis')
         url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
@@ -224,7 +224,7 @@ class TestWithSimpleDatabase:
 
         # Find packet which cites a SWIFT GRB, check URLs looked up correctly:
         ref_string = 'BAT_GRB'
-        url = url_for(apiv1.name + '.' + views.IvornList.view_name,
+        url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
                       **{filters.RefContains.querystring_key: ref_string}
                       )
         rv = self.c.get(url)

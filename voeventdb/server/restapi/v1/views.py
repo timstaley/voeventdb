@@ -1,12 +1,9 @@
 from __future__ import absolute_import
-
 from flask import (
     Blueprint, request, make_response, render_template, current_app,
-    jsonify
+    jsonify, url_for
 )
-
 import urllib
-
 from voeventdb.server import __versiondict__ as package_version_dict
 from voeventdb.server.restapi.annotate import lookup_relevant_urls
 from voeventdb.server.database import session_registry as db_session
@@ -17,8 +14,6 @@ import voeventdb.server.database.query as query
 from voeventdb.server.restapi.v1.viewbase import (
     QueryView, ListQueryView, _add_to_api, make_response_dict
 )
-
-
 # This import may look unused, but activates the filter registry -
 # Do not delete!
 import voeventdb.server.restapi.v1.filters
@@ -65,9 +60,12 @@ def validate_ivorn(url_encoded_ivorn):
     else:
         ivorn = url_encoded_ivorn
     if ivorn is None:
-        raise apierror.IvornNotSupplied
+        raise apierror.IvornNotSupplied(
+            suggested_ivorn_url=url_for(apiv1.name + '.' + ListIvorn.view_name))
     if not convenience.ivorn_present(db_session, ivorn):
-        raise apierror.IvornNotFound(ivorn)
+        raise apierror.IvornNotFound(
+            ivorn,
+            suggested_ivorn_url=url_for(apiv1.name + '.' + ListIvorn.view_name))
     return ivorn
 
 
@@ -83,7 +81,7 @@ def apiv1_root_view():
                                       'http://' + request.host + '/docs')
     message = "Welcome to the voeventdb REST API, " \
               "interface version '{}'.".format(
-                                                                apiv1.name)
+        apiv1.name)
     api_details = {
         'message': message,
         'api_version': apiv1.name,
@@ -133,32 +131,6 @@ def page_not_found(abort_error):
 # Alphabetically ordered endpoints from here on
 # -----------------------------------------------
 
-@add_to_apiv1
-class AuthoredMonthCount(QueryView):
-    """
-    Result:
-        Dict: Mapping month -> packet counts per-month.
-
-    Here, 'month' refers to the month of the 'authoring' DateTime,
-    i.e. the ``Who.Date`` element of the VOEvent. NB, may be None.
-
-
-    """
-    view_name = 'authored_month_count'
-
-    def get_query(self):
-        return query.authored_month_counts_q(db_session)
-
-    def process_query(self, q):
-        raw_results = q.all()
-        converted_results = []
-        for r in raw_results:
-            if r.month_id:
-                newrow = (r.month_id.date().isoformat()[:-3], r.month_count)
-            else:
-                newrow = r
-            converted_results.append(newrow)
-        return dict(converted_results)
 
 
 @add_to_apiv1
@@ -179,7 +151,7 @@ class Count(QueryView):
 
 
 @add_to_apiv1
-class IvornList(ListQueryView):
+class ListIvorn(ListQueryView):
     """
     Result (list of strings):
         ``[ ivorn1, ivorn2, ... ]``
@@ -187,7 +159,7 @@ class IvornList(ListQueryView):
     List of ivorns matching querystring. Number returned is limited by the
     ``limit`` parameter, which defaults to 100 (see :ref:`pagination`).
     """
-    view_name = 'ivorn'
+    view_name = 'list/ivorn'
 
     def get_query(self):
         return db_session.query(Voevent.ivorn)
@@ -204,7 +176,7 @@ class IvornList(ListQueryView):
 
 
 @add_to_apiv1
-class IvornReferenceCount(ListQueryView):
+class ListIvornReferenceCount(ListQueryView):
     """
     Result (list of 2-element lists):
         ``[[ivorn, n_refs], ...]``
@@ -214,7 +186,7 @@ class IvornReferenceCount(ListQueryView):
      - IVORN of packet
      - Number of references to other packets, in this packet.
     """
-    view_name = 'ivorn_ref_count'
+    view_name = 'list/ivorn_nrefs'
 
     def get_query(self):
         return query.ivorn_cites_to_others_count_q(db_session)
@@ -224,7 +196,7 @@ class IvornReferenceCount(ListQueryView):
 
 
 @add_to_apiv1
-class IvornCitedCount(ListQueryView):
+class ListIvornCitedCount(ListQueryView):
     """
     Result (list of 2-element lists):
         ``[[ivorn, n_cited], ...]``
@@ -234,7 +206,7 @@ class IvornCitedCount(ListQueryView):
         - IVORN of packet
         - Number of times this packet is cited by others
     """
-    view_name = 'ivorn_cited_count'
+    view_name = 'list/ivorn_ncites'
 
     def get_query(self):
         return query.ivorn_cited_from_others_count_q(db_session)
@@ -244,12 +216,40 @@ class IvornCitedCount(ListQueryView):
 
 
 @add_to_apiv1
-class RoleCount(QueryView):
+class MapAuthoredMonthCount(QueryView):
+    """
+    Result:
+        Dict: Mapping month -> packet counts per-month.
+
+    Here, 'month' refers to the month of the 'authoring' DateTime,
+    i.e. the ``Who.Date`` element of the VOEvent. NB, may be None.
+
+
+    """
+    view_name = 'map/authored_month_count'
+
+    def get_query(self):
+        return query.authored_month_counts_q(db_session)
+
+    def process_query(self, q):
+        raw_results = q.all()
+        converted_results = []
+        for r in raw_results:
+            if r.month_id:
+                newrow = (r.month_id.date().isoformat()[:-3], r.month_count)
+            else:
+                newrow = r
+            converted_results.append(newrow)
+        return dict(converted_results)
+
+
+@add_to_apiv1
+class MapRoleCount(QueryView):
     """
     Result:
         Dict: Mapping role -> packet counts per-role.
     """
-    view_name = 'role_count'
+    view_name = 'map/role_count'
 
     def get_query(self):
         return query.role_counts_q(db_session)
@@ -259,12 +259,12 @@ class RoleCount(QueryView):
 
 
 @add_to_apiv1
-class StreamCount(QueryView):
+class MapStreamCount(QueryView):
     """
     Result:
         Dict: Mapping stream -> packet counts per-stream.
     """
-    view_name = 'stream_count'
+    view_name = 'map/stream_count'
 
     def get_query(self):
         return query.stream_counts_q(db_session)
@@ -274,12 +274,12 @@ class StreamCount(QueryView):
 
 
 @add_to_apiv1
-class StreamRoleCount(QueryView):
+class MapStreamRoleCount(QueryView):
     """
     Result:
         Nested dict: Mapping stream -> role -> packet counts per-stream-and-role.
     """
-    view_name = 'stream_role_count'
+    view_name = 'map/stream_role_count'
 
     def get_query(self):
         return query.stream_counts_role_breakdown_q(db_session)
@@ -288,9 +288,9 @@ class StreamRoleCount(QueryView):
         return convenience.to_nested_dict(q.all())
 
 
-@apiv1.route('/synopsis/')
-@apiv1.route('/synopsis/<path:url_encoded_ivorn>')
-def synopsis_view(url_encoded_ivorn=None):
+@apiv1.route('/packet/synopsis/')
+@apiv1.route('/packet/synopsis/<path:url_encoded_ivorn>')
+def packet_synopsis(url_encoded_ivorn=None):
     """
     Result:
         Nested dict providing key details, e.g.::
@@ -359,9 +359,9 @@ def synopsis_view(url_encoded_ivorn=None):
     return jsonify(make_response_dict(result))
 
 
-@apiv1.route('/xml/')
-@apiv1.route('/xml/<path:url_encoded_ivorn>')
-def xml_view(url_encoded_ivorn=None):
+@apiv1.route('/packet/xml/')
+@apiv1.route('/packet/xml/<path:url_encoded_ivorn>')
+def packet_xml(url_encoded_ivorn=None):
     """
     Returns the XML packet contents stored for a given IVORN.
 

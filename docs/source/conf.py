@@ -135,7 +135,7 @@ from voeventdb.server.restapi.app import app
 # OK, let's get ugly!
 # sphinx.contrib.autohttp has no way to hyperlink the endpoint headings.
 # So instead, we add hyperlinks in the docstrings of the APIV0 endpoints:
-apiv1_rules = [r for r in sorted(app.url_map.iter_rules())
+apiv1_rules = [r for r in sorted(app.url_map.iter_rules(), key=lambda x: str(x))
                if r.endpoint.startswith('apiv1')]
 import textwrap
 

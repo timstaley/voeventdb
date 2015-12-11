@@ -181,13 +181,13 @@ class IvornPrefix(QueryFilter):
 @add_to_filter_registry
 class RefAny(QueryFilter):
     """
-    Return only VOEvents which have / do not have references to other VOEvents.
+    Return only VOEvents which make / don't make reference to any other VOEvents.
 
-    Applied via query-strings ``refs=true`` or ``refs=false``.
+    Applied via query-strings ``ref_any=true`` or ``ref_any=false``.
     NB 'true'/'false' string-values are case-insensitive, so e.g.
     'true', 'True', 'TRUE', 'tRUe' are all valid.
     """
-    querystring_key = 'ref'
+    querystring_key = 'ref_any'
     example_values = ['true',
                       'True',
                       'false'

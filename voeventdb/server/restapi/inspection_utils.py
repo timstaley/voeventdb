@@ -12,7 +12,7 @@ def apiv1_endpoints():
     # Grab all app endpoints, filter to apiv1
     apiv1_rules = [r for r in app.url_map.iter_rules()
                    if r.endpoint.startswith('apiv1')]
-    # Filter duplicate listings for path-routed endpoints (xml_view, synopsis)
+    # Filter duplicate listings for path-routed endpoints (packet_xml, synopsis)
     apiv1_rules = [r for r in apiv1_rules if
                    '<' not in str(r)]
     return {str(r.endpoint)[6:]: str(r) for r in apiv1_rules}
