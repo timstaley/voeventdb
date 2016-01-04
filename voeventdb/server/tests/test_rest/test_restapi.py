@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import pytest
-from voeventdb.server.database.models import Cite
+from voeventdb.server.database.models import Voevent, Cite
 from voeventdb.server.restapi.v1.views import apiv1
 from voeventdb.server.restapi.v1.definitions import (
     OrderValues,
@@ -9,11 +9,12 @@ from voeventdb.server.restapi.v1.definitions import (
 )
 import voeventdb.server.restapi.v1.views as views
 import voeventdb.server.restapi.v1.filters as filters
+from voeventdb.server.tests.fixtures.fake import heartbeat_packets
+import voeventparse as vp
 import json
 import urllib
-from flask import url_for
+from flask import url_for, request
 import iso8601
-
 
 
 @pytest.mark.usefixtures('fixture_db_session')
@@ -79,9 +80,10 @@ class TestWithSimpleDatabase:
         assert rv.status_code == 200
         rd = json.loads(rv.data)
         assert len(qualifying_packets)
-        assert rd[ResultKeys.result] == len(qualifying_packets)  # date bounds are inclusive
+        # date bounds are inclusive:
+        assert rd[ResultKeys.result] == len(qualifying_packets)
         assert rd[ResultKeys.querystring] == dict(
-            authored_until=[authored_until_dt.isoformat(), ])
+                authored_until=[authored_until_dt.isoformat(), ])
 
     def test_count_w_multiquery(self, simple_populated_db):
         dbinf = simple_populated_db
@@ -146,8 +148,8 @@ class TestWithSimpleDatabase:
         """
         with self.c as c:
             url = url_for(
-                apiv1.name + '.' + views.ListIvornReferenceCount.view_name,
-                **{PaginationKeys.order: OrderValues.id}
+                    apiv1.name + '.' + views.ListIvornReferenceCount.view_name,
+                    **{PaginationKeys.order: OrderValues.id}
             )
             rv = self.c.get(url)
         assert rv.status_code == 200
@@ -168,7 +170,8 @@ class TestWithSimpleDatabase:
                 n_internal_citations += count
 
         with self.c as c:
-            url = url_for(apiv1.name + '.' + views.ListIvornCitedCount.view_name)
+            url = url_for(
+                    apiv1.name + '.' + views.ListIvornCitedCount.view_name)
             rv = self.c.get(url)
         assert rv.status_code == 200
         rd = json.loads(rv.data)
@@ -213,7 +216,7 @@ class TestWithSimpleDatabase:
         # Negative case, IVORN present but packet contains no references
         all_ivorns = set(simple_populated_db.packet_dict.keys())
         ivorns_wo_refs = list(
-            all_ivorns - set(simple_populated_db.followup_packets))
+                all_ivorns - set(simple_populated_db.followup_packets))
         ivorn = ivorns_wo_refs[0]
         url = ep_url + urllib.quote_plus(ivorn)
         rv = self.c.get(url)
@@ -228,9 +231,9 @@ class TestWithSimpleDatabase:
                       **{filters.RefContains.querystring_key: ref_string}
                       )
         rv = self.c.get(url)
-        ref_lists = [ Cite.from_etree(p)
-                    for p in simple_populated_db.insert_packets
-                    if Cite.from_etree(p)]
+        ref_lists = [Cite.from_etree(p)
+                     for p in simple_populated_db.insert_packets
+                     if Cite.from_etree(p)]
         matches = []
         for rl in ref_lists:
             for r in rl:
@@ -247,5 +250,55 @@ class TestWithSimpleDatabase:
         assert len(rd['relevant_urls']) == 2
 
 
+class TestSpatialFilters:
+    @pytest.fixture(autouse=True)
+    def assign_test_client_and_initdb(self, flask_test_client,
+                                      fixture_db_session):
+        self.c = flask_test_client  # Purely for brevity
+        n_packets = 17
+        packets = heartbeat_packets(n_packets=n_packets)
+        for counter, pkt in enumerate(packets, start=1):
+            packet_dec = 180.0 / n_packets * counter -90
+            coords = vp.Position2D(
+                    ra=15, dec=packet_dec, err=0.1,
+                    units=vp.definitions.units.degrees,
+                    system=vp.definitions.sky_coord_system.utc_icrs_geo)
+            # print "Inserting coords", coords
+            vp.add_where_when(
+                    pkt,
+                    coords=coords,
+                    obs_time=iso8601.parse_date(pkt.Who.Date.text),
+                    observatory_location=vp.definitions.observatory_location.geosurface
+            )
+        self.packets = packets
+        self.ivorn_dec_map = {}
+        for pkt in self.packets:
+            posn = vp.pull_astro_coords(pkt)
+            self.ivorn_dec_map[pkt.attrib['ivorn']] = posn.dec
+            fixture_db_session.add(Voevent.from_etree(pkt))
 
-        # def test_ref_view(self, simple_populated_db):
+    def test_gt(self):
+        min_dec = -33.2
+        url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                      **{filters.DecGreaterThan.querystring_key: min_dec}
+                      )
+        with self.c as c:
+            rv = self.c.get(url)
+        rd = json.loads(rv.data)[ResultKeys.result]
+        matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
+                           if self.ivorn_dec_map[ivorn] > min_dec]
+        assert len(rd) == len(matching_ivorns)
+        # print len(rd)
+
+    def test_lt(self):
+        max_dec = -33.2
+        url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                      **{filters.DecLessThan.querystring_key: max_dec}
+                      )
+        with self.c as c:
+            rv = self.c.get(url)
+        rd = json.loads(rv.data)[ResultKeys.result]
+        matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
+                           if self.ivorn_dec_map[ivorn] < max_dec]
+        assert len(rd) == len(matching_ivorns)
+        # print len(rd)

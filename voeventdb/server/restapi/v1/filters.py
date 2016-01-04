@@ -117,7 +117,7 @@ class CoordsAny(QueryFilter):
     """
     Return only VOEvents which have / do not have associated co-ord positions.
 
-    Applied via query-strings ``coords=true`` or ``coords=false``
+    Applied via query-strings ``coord=true`` or ``coord=false``
     """
     querystring_key = 'coord'
     example_values = ['true',
@@ -133,6 +133,53 @@ class CoordsAny(QueryFilter):
         else:
             raise apierror.InvalidQueryString(self.querystring_key,
                                               filter_value)
+
+@add_to_filter_registry
+class DecGreaterThan(QueryFilter):
+    """
+    Return VOEvents which have position, with Dec greater than given value.
+
+    Dec should be specified in decimal degrees.
+    """
+    querystring_key = 'dec_gt'
+    example_values =  ['0',
+                       '-45.123'
+                       ]
+    simplejoin_tables = [Coord, ]
+    def filter(self, filter_value):
+        try:
+            min_dec = float(filter_value)
+            if min_dec < -90.0 or min_dec > 90.0:
+                raise ValueError
+        except:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                  filter_value,
+                                  reason="invalid declination value")
+        return Coord.dec > min_dec
+
+
+@add_to_filter_registry
+class DecLessThan(QueryFilter):
+    """
+    Return VOEvents which have position, with Dec greater than given value.
+
+    Dec should be specified in decimal degrees.
+    """
+    querystring_key = 'dec_lt'
+    example_values =  ['0',
+                       '-45.123'
+                       ]
+    simplejoin_tables = [Coord, ]
+    def filter(self, filter_value):
+        try:
+            max_dec = float(filter_value)
+            if max_dec < -90.0 or max_dec > 90.0:
+                raise ValueError
+        except:
+            raise apierror.InvalidQueryString(self.querystring_key,
+                                  filter_value,
+                                  reason="invalid declination value")
+        return Coord.dec < max_dec
 
 
 @add_to_filter_registry

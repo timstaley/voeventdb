@@ -321,9 +321,9 @@ class Coord(Base, OdictMixin):
                             posn.system
                         )
                     )
-                if posn.units != 'deg':
+                if posn.units != vp.definitions.units.degrees:
                     raise NotImplementedError(
-                        "Loading positions in formats other than degrees"
+                        "Loading positions in formats other than degrees "
                         "is not yet implemented."
                     )
                 try:
