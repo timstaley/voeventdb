@@ -137,7 +137,7 @@ class CoordsAny(QueryFilter):
 @add_to_filter_registry
 class DecGreaterThan(QueryFilter):
     """
-    Return VOEvents which have position, with Dec greater than given value.
+    Return VOEvents with position with Dec greater than given value.
 
     Dec should be specified in decimal degrees.
     """
@@ -161,7 +161,7 @@ class DecGreaterThan(QueryFilter):
 @add_to_filter_registry
 class DecLessThan(QueryFilter):
     """
-    Return VOEvents which have position, with Dec greater than given value.
+    Return VOEvents with position with Dec less than given value.
 
     Dec should be specified in decimal degrees.
     """
