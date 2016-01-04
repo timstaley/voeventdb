@@ -53,13 +53,6 @@ def empty_db_connection(request):
     yield connection
     # TearDown
     transaction.rollback()
-    # The next line is effectively voodoo; it shouldn't be necessary but seems
-    # to fix some intermittent race-condition issue which occasionally causes
-    # py.test runs to fail due to database-integrity errors.
-    # (My guess is that the transaction-rollback is somehow entering a
-    # race-condition with the next test, adding this extra command ensures that
-    # the database is properly emptied before continuing.)
-    Base.metadata.drop_all(bind=connection)
     connection.close()
     engine.dispose()
 
