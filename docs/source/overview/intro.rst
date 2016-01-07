@@ -3,13 +3,18 @@
 Introduction
 =============
 
-*voeventdb* is a database-store and accompanying RESTful
+*voeventdb.server* is a database-store and accompanying RESTful
 query API for archiving and retrieving
 `VOEvent <http://voevent.readthedocs.org/>`_ packets.
 
+There is an accompanying Python client-library for end-users
+(i.e. astronomers), `voeventdb.remote`_.
+
+.. _voeventdb.remote:  http://voeventdbremote.readthedocs.org/
+
 *A what?*
 ----------
-(If you've never heard of a VOEvent,
+(If you've never heard of a VOEvent, you may want to
 `read this first <http://voevent.readthedocs.org/en/latest/intro.html>`_).
 
 This package contains code for building a database of
@@ -36,7 +41,7 @@ be summarised as follows:
  - Ready-made Python client-library
     If you've never used a 'REST' interface before, don't worry. Voeventdb comes
     with a ready-made Python client-library,
-    `voeventdb.remote <https://github.com/timstaley/voeventdb.remote>`_,
+    `voeventdb.remote`_,
     which simplifies
     querying the database to calling a few Python functions, as laid out in the
     accompanying `tutorial <http://voeventdbremote.readthedocs.org/en/latest/>`_.
@@ -76,7 +81,7 @@ Getting started
 ----------------
 If you just want to query our copy of the database rather than running your
 own, then you should probably head over to the Python-client-package,
-`voeventdb.remote <https://github.com/timstaley/voeventdb.remote>`_,
+`voeventdb.remote`_,
 or jump straight to the relevant
 `documentation <http://voeventdbremote.readthedocs.org/en/latest/>`_.
 

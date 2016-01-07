@@ -1,5 +1,5 @@
-Welcome to voeventdb's documentation!
-========================================
+Welcome to voeventdb.server's documentation!
+============================================
 
 Version |version|
 

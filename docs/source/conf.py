@@ -34,7 +34,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'voeventdb'
+project = u'voeventdb.server'
 copyright = u'2015, Tim Staley'
 author = u'Tim Staley'
 
@@ -75,17 +75,17 @@ html_show_sphinx = False
 # html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'voeventdbdoc'
+htmlhelp_basename = 'voeventdbserverdoc'
 
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'voeventdb', u'voeventdb Documentation',
-     [author], 1)
-]
+# man_pages = [
+#     (master_doc, 'voeventdb', u'voeventdb Documentation',
+#      [author], 1)
+# ]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -93,11 +93,11 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'voeventdb', u'voeventdb Documentation',
-     author, 'voeventdb', 'One line description of project.',
-     'Miscellaneous'),
-]
+# texinfo_documents = [
+#     (master_doc, 'voeventdb', u'voeventdb Documentation',
+#      author, 'voeventdb', 'One line description of project.',
+#      'Miscellaneous'),
+# ]
 
 nitpicky = True
 
