@@ -7,6 +7,7 @@ import glob
 import versioneer
 
 install_requires = [
+    'click',
     'flask',
     'iso8601',
     'psycopg2',
