@@ -1,6 +1,10 @@
 from __future__ import absolute_import, print_function
 
-from voeventdb.server.database.convenience import ivorn_present, safe_insert_voevent
+from voeventdb.server.database.convenience import (
+    ivorn_present,
+    ivorn_prefix_present,
+    safe_insert_voevent,
+)
 import voeventdb.server.database.convenience as convenience
 import voeventdb.server.database.query as query
 
@@ -16,6 +20,13 @@ class TestConvenienceFuncs:
         dbinf = simple_populated_db
         assert ivorn_present(s, dbinf.inserted_ivorns[0]) == True
         assert ivorn_present(s, dbinf.absent_ivorn) == False
+
+    def test_ivorn_prefix_present(self, fixture_db_session, simple_populated_db):
+        s = fixture_db_session
+        dbinf = simple_populated_db
+        assert ivorn_prefix_present(s, dbinf.inserted_ivorns[0]) == True
+        assert ivorn_prefix_present(s, dbinf.inserted_ivorns[0][:-3]) == True
+        assert ivorn_prefix_present(s, dbinf.absent_ivorn) == False
 
     def test_safe_insert(self, fixture_db_session, simple_populated_db,
                          caplog

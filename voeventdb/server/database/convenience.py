@@ -15,6 +15,15 @@ def ivorn_present(session, ivorn):
     return bool(
         session.query(Voevent.id).filter(Voevent.ivorn == ivorn).count())
 
+def ivorn_prefix_present(session, ivorn_prefix):
+    """
+    Predicate, returns whether there is an entry in the database with matching
+    IVORN prefix.
+    """
+    n_matches = session.query(Voevent.ivorn).filter(
+            Voevent.ivorn.like('{}%'.format(ivorn_prefix))).count()
+    return bool(n_matches)
+
 
 def safe_insert_voevent(session, etree):
     """
