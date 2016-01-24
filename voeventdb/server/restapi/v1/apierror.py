@@ -15,6 +15,17 @@ class InvalidQueryString(Exception):
         if reason:
             self.message += " - " + reason
 
+class LimitMaxExceeded(Exception):
+    code = 413
+    description = "Max 'limit' value exceeded"
+
+    def __init__(self, limit_request, limit_max):
+        Exception.__init__(self)
+        self.message = """
+            You requested too many rows ('limit={}').
+            The maximum allowed is {}.
+            """.format(limit_request, limit_max)
+
 
 class IvornNotFound(Exception):
     code = 422

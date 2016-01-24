@@ -10,6 +10,7 @@ from voeventdb.server.restapi.v1.definitions import (
 import voeventdb.server.restapi.v1.views as views
 import voeventdb.server.restapi.v1.filters as filters
 from voeventdb.server.tests.fixtures.fake import heartbeat_packets
+import voeventdb.server.restapi.default_config as rest_app_config
 import voeventparse as vp
 import json
 import urllib
@@ -106,6 +107,30 @@ class TestWithSimpleDatabase:
         assert rv.status_code == 200
         rd = json.loads(rv.data)
         assert rd[ResultKeys.result] == dbinf.inserted_ivorns
+
+    def test_row_limit(self, simple_populated_db):
+        maxlimit = rest_app_config.MAX_QUERY_LIMIT
+        #Limit at max should be OK:
+        ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                                 **{PaginationKeys.limit : maxlimit})
+        rv = self.c.get(ivorn_list_url)
+        assert rv.status_code == 200
+        #Limit at max+1 should fail, 413:
+        ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                                 **{PaginationKeys.limit : maxlimit+1})
+        rv = self.c.get(ivorn_list_url)
+        assert rv.status_code == 413
+
+        #Non-integer values should return a 400
+        ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                                 **{PaginationKeys.limit : 'foobar'})
+        rv = self.c.get(ivorn_list_url)
+        assert rv.status_code == 400
+        ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                                 **{PaginationKeys.limit : '1.23'})
+        rv = self.c.get(ivorn_list_url)
+        assert rv.status_code == 400
+
 
     def test_consistent_ordering(self, simple_populated_db):
         """

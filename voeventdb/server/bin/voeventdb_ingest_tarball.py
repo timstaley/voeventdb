@@ -27,7 +27,10 @@ logger = logging.getLogger("voeventdb-ingest")
                   dbconfig.testdb_corpus_url.database
               ))
 @click.option('--check/--no-check', default=False,
-              help="Check for (and ignore) duplicate packets.")
+              help="Check for (and ignore) duplicate packets. Default behaviour "
+                   "is to ingest in batches without checking first - this is "
+                   "faster but may fail part-way through if it hits a duplicate "
+                   "entry.")
 @click.argument('tarballs', nargs=-1, type=click.Path())
 def main(dbname, check, tarballs):
     dburl = dbconfig.make_db_url(dbconfig.default_admin_db_params, dbname)

@@ -12,7 +12,7 @@ import voeventdb.server.database.convenience as convenience
 import voeventdb.server.restapi.v1.apierror as apierror
 import voeventdb.server.database.query as query
 from voeventdb.server.restapi.v1.viewbase import (
-    QueryView, ListQueryView, _add_to_api, make_response_dict
+    QueryView, ListQueryView, _add_to_blueprint, make_response_dict
 )
 # This import may look unused, but activates the filter registry -
 # Do not delete!
@@ -26,9 +26,9 @@ apiv1 = Blueprint('apiv1', __name__,
 
 def add_to_apiv1(queryview_class):
     """
-    Partially bind the 'add_to_api' wrapper so we can use it as a decorator.
+    Partially bind the 'add_to_blueprint' wrapper so we can use it as a decorator.
     """
-    return _add_to_api(queryview_class, apiv1)
+    return _add_to_blueprint(queryview_class, apiv1)
 
 
 def get_apiv1_rules():
@@ -98,7 +98,7 @@ def apiv1_root_view():
     else:
         return jsonify(api_details)
 
-
+@apiv1.errorhandler(apierror.LimitMaxExceeded)
 @apiv1.errorhandler(apierror.InvalidQueryString)
 @apiv1.errorhandler(apierror.IvornNotFound)
 @apiv1.errorhandler(apierror.IvornNotSupplied)

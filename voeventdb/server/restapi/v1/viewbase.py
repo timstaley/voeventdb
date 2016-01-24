@@ -16,7 +16,10 @@ from voeventdb.server.restapi.v1.definitions import (
     PaginationKeys,
     ResultKeys,
 )
-from voeventdb.server.restapi.v1.apierror import InvalidQueryString
+from voeventdb.server.restapi.v1.apierror import (
+    LimitMaxExceeded,
+    InvalidQueryString,
+)
 
 from sqlalchemy import asc, desc
 
@@ -62,10 +65,10 @@ class ListQueryView(View):
         if order_stringval:
             if order_stringval not in OrderValues._value_list:
                 raise InvalidQueryString(
-                    querystring_key=PaginationKeys.order,
-                    querystring_value=order_stringval,
-                    reason="Not a valid ordering, try one of {}.".format(
-                        OrderValues._value_list))
+                        querystring_key=PaginationKeys.order,
+                        querystring_value=order_stringval,
+                        reason="Not a valid ordering, try one of {}.".format(
+                                OrderValues._value_list))
 
             if order_stringval.startswith('-'):
                 ordering_func = desc
@@ -80,9 +83,20 @@ class ListQueryView(View):
         return q
 
     def dispatch_request(self):
-        limit = request.args.get(PaginationKeys.limit, None)
-        if not limit:
+        limit_str = request.args.get(PaginationKeys.limit, None)
+        max_limit = current_app.config['MAX_QUERY_LIMIT']
+        if not limit_str:
             limit = current_app.config['DEFAULT_QUERY_LIMIT']
+        else:
+            try:
+                limit = int(limit_str)
+            except ValueError:
+                raise InvalidQueryString(
+                        querystring_key=PaginationKeys.limit,
+                        querystring_value=limit_str,
+                        reason="Please supply an integer-valued row-limit.")
+        if limit > max_limit:
+            raise LimitMaxExceeded(limit, max_limit)
 
         q = self.get_query()
         q = apply_filters(q, request.args)
@@ -97,8 +111,8 @@ class ListQueryView(View):
         return jsonify(resultdict)
 
 
-def _add_to_api(queryview_class, api):
+def _add_to_blueprint(queryview_class, blueprint):
     name = queryview_class.view_name
-    api.add_url_rule('/' + name,
-                     view_func=queryview_class.as_view(name))
+    blueprint.add_url_rule('/' + name,
+                           view_func=queryview_class.as_view(name))
     return queryview_class
