@@ -302,7 +302,7 @@ class TestSpatialFilters:
             self.ivorn_dec_map[pkt.attrib['ivorn']] = posn.dec
             fixture_db_session.add(Voevent.from_etree(pkt))
 
-    def test_gt(self):
+    def test_dec_gt(self):
         min_dec = -33.2
         url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
                       **{filters.DecGreaterThan.querystring_key: min_dec}
@@ -315,7 +315,7 @@ class TestSpatialFilters:
         assert len(rd) == len(matching_ivorns)
         # print len(rd)
 
-    def test_lt(self):
+    def test_dec_lt(self):
         max_dec = -33.2
         url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
                       **{filters.DecLessThan.querystring_key: max_dec}
@@ -326,4 +326,20 @@ class TestSpatialFilters:
         matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
                            if self.ivorn_dec_map[ivorn] < max_dec]
         assert len(rd) == len(matching_ivorns)
-        # print len(rd)
+
+    def test_dec_gt_and_lt(self):
+        max_dec = 33.2
+        min_dec = 10.2
+        url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
+                      **{filters.DecLessThan.querystring_key: max_dec,
+                         filters.DecGreaterThan.querystring_key: min_dec,
+                         }
+                      )
+        with self.c as c:
+            rv = self.c.get(url)
+        rd = json.loads(rv.data)[ResultKeys.result]
+        matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
+                           if self.ivorn_dec_map[ivorn] < max_dec
+                           and self.ivorn_dec_map[ivorn] > min_dec
+                           ]
+        assert len(rd) == len(matching_ivorns)

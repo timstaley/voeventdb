@@ -63,10 +63,12 @@ class QueryFilter(object):
             for filter_value in args.getlist(self.querystring_key)
         )
 
-    def apply_filter(self, query, args):
+    def apply_filter(self, query, args, pre_joins):
         if self.simplejoin_tables:
             for tbl in self.simplejoin_tables:
-                query = query.join(tbl)
+                if tbl not in pre_joins:
+                    query = query.join(tbl)
+                    pre_joins.append(tbl)
         query = query.filter(self.generate_filter_set(args))
         return query
 
@@ -75,10 +77,11 @@ def apply_filters(query, args):
     """
     Apply all QueryFilters, validating the querystring in the process.
     """
+    pre_joins = []
     for querystring_key, filter_value in args.iteritems(multi=True):
         if querystring_key in filter_registry:
             cls_inst = filter_registry[querystring_key]
-            query = cls_inst.apply_filter(query, args)
+            query = cls_inst.apply_filter(query, args, pre_joins)
         elif querystring_key in PaginationKeys._value_list:
             pass
         else:
