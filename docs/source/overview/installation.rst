@@ -16,14 +16,14 @@ All-in-one installation scripts for the DevOps_ enthusiast
 
 If you'd like to install your own copy of voeventdb, you may be
 interested in the accompanying
-`Ansible <http://www.ansible.com/configuration-management>`__
-`role <http://docs.ansible.com/ansible/playbooks_roles.html>`__ that
+`Ansible <http://www.ansible.com/configuration-management>`_
+`role <http://docs.ansible.com/ansible/playbooks_roles.html>`_ that
 provides a pre-configured installation of the voeventdb database and
 REST API, optionally served via Apache, available here:
 https://github.com/timstaley/ansible-voeventdb.
 
 The voeventdb role is demonstrated in conjunction with another role
-installing the `Comet <http://comet.readthedocs.org/>`__ broker (to pull
+installing the `Comet <http://comet.readthedocs.org/>`_ broker (to pull
 in the latest VOEvent packets) here:
 https://github.com/4pisky/voeventdb-deploy - in fact, those are the
 scripts which build http://voeventdb.4pisky.org/.
@@ -43,7 +43,7 @@ for some tips regarding manual installation.
 Postgres Database Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Before the unit-tests or database setup will run, we need a
-`PostgreSQL <http://www.postgresql.org/>`__ installation, and a database
+`PostgreSQL <http://www.postgresql.org/>`_ installation, and a database
 login with createdb rights. On a typical Debian system, install postgres
 with something like:
 
@@ -70,13 +70,12 @@ need to login and create your user like so:
     postgres=# alter user userfoo with password 'userfoo';
 
 For full details, consult the `postgres
-docs <http://www.postgresql.org/docs/9.3/interactive/tutorial-createdb.html>`__.
+docs <http://www.postgresql.org/docs/9.3/interactive/tutorial-createdb.html>`_.
 
 Note the unit-tests assume by default a database username/password which
-are both the same as your login username, but this can be edited in the
-`test config file <voeventdb/tests/config.py>`__. Alternatively, edit
-`pg\_hba.conf <http://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html>`__
-appropriately, or consult a friendly sysadmin.
+are both the same as your login username, but this can be easily changed, see the
+module
+`voeventdb.server.database.config <https://github.com/timstaley/voeventdb/blob/master/voeventdb/server/database/config.py#L11>`_.
 
 A final word on Postgres setup - I recommend setting
 
