@@ -22,7 +22,7 @@ from collections import defaultdict
 # For now, we just make it module-level.
 #
 @pytest.yield_fixture(scope='module')
-def empty_db_connection(request):
+def empty_db_connection():
     """
     Connect to db, create tables and begin connection-level (outer) transaction.
 
