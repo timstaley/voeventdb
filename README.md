@@ -1,4 +1,4 @@
-# voeventdb      [![Build Status](https://travis-ci.org/timstaley/voeventdb.svg?branch=master)](https://travis-ci.org/timstaley/voeventdb)
+# voeventdb.server  [![Build Status](https://travis-ci.org/timstaley/voeventdb.svg?branch=master)](https://travis-ci.org/timstaley/voeventdb)
 
 A database-store and accompanying RESTful query API for archiving and retrieving
 [VOEvent](http://voevent.readthedocs.org/) packets.
