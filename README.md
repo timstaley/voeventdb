@@ -10,6 +10,11 @@ If you're new to voeventdb, or have never even heard of a VOEvent, start
 with the
 [introduction page](http://voeventdb.readthedocs.org/en/latest/overview/intro.html).
 
+## Client library
+If you just want to query our VOEvent archive, rather than running your
+own, then you should probably check out the Python-client-package, 
+[voeventdb.remote](http://voeventdbremote.readthedocs.io/).
+
 ## License
 GPL v2 (see [licence file](COPYING.txt)).
 
