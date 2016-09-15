@@ -1,13 +1,39 @@
 from __future__ import print_function
-import pytest
-import os
-import voeventdb.server.restapi.inspection_utils as iu
-from voeventdb.server.restapi.v1.views import apiv1
-from voeventdb.server.restapi.v1.viewbase import OrderValues, PaginationKeys
+
 import logging
+import os
+
+import pytest
+import voeventdb.server.restapi.inspection_utils as iu
+from flask import request, url_for
+from voeventdb.server.restapi.v1.viewbase import OrderValues, PaginationKeys
+from voeventdb.server.restapi.v1.views import apiv1
+
 logger = logging.getLogger(__name__)
 
-from flask import request, url_for
+"""
+Enumerative unit-test generation. This gets kinda messy.
+
+What we're doing here is fetching a list of all views (endpoints), and a
+separate list of all possible filters. Then, for every view, we check that it
+runs successfully with every filter, for all of the example values associated
+with that filter. If the view is a 'listqueryview', then we further enumerate
+over every possible ordering value.
+
+Note: **this does not actually check that results are correct!** Only that
+the queries enumerated run successfully, i.e. they create a valid SQLAlchemy
+query, and hence evaluate to valid SQL. Even that is a solid win though,
+since the queries are being generated algorithmically by combining SQLAlchemy
+queries and filters from multiple parts of the codebase.
+
+See the other manually-written unit-test files for separate verifications of key
+functionality such as positional queries.
+
+We could take it further and start combining filters in pairs etc, but I figured
+this was an acceptable point of trade-off for complexity vs. completeness.
+
+"""
+
 qv_views = [v.view_name for v in iu.queryview_subclasses()]
 lqv_views =  [v.view_name for v in iu.listqueryview_subclasses()]
 all_views = qv_views + lqv_views
