@@ -6,9 +6,12 @@ from sqlalchemy.orm import aliased
 
 def authored_month_counts_q(session):
     s = session
+    # Careful with the datetime-truncation here - ensure we're working in UTC
+    # before we bin by month!
     month_counts_qry = s.query(
-        func.date_trunc('month', Voevent.author_datetime).distinct().label(
-            'month_id'),
+        func.date_trunc('month',
+                        func.timezone('UTC',Voevent.author_datetime)
+                        ).distinct().label('month_id'),
         (func.count(Voevent.ivorn)).label('month_count'),
     ).select_from(Voevent).group_by('month_id')
     return month_counts_qry
