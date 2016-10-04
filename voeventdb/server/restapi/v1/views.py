@@ -3,7 +3,7 @@ from flask import (
     Blueprint, request, make_response, render_template, current_app,
     jsonify, url_for
 )
-import urllib
+
 from voeventdb.server import __versiondict__ as package_version_dict
 from voeventdb.server.restapi.annotate import lookup_relevant_urls
 from voeventdb.server.database import session_registry as db_session
@@ -14,8 +14,14 @@ import voeventdb.server.database.query as query
 from voeventdb.server.restapi.v1.viewbase import (
     QueryView, ListQueryView, _add_to_blueprint, make_response_dict
 )
+import six
+if six.PY3:
+    from urllib.parse import unquote
+else:
+    from urllib import unquote
 # This import may look unused, but activates the filter registry -
 # Do not delete!
+# noinspection PyUnresolvedReferences
 import voeventdb.server.restapi.v1.filters
 
 apiv1 = Blueprint('apiv1', __name__,
@@ -49,14 +55,14 @@ def error_to_dict(error):
         'error': {
             'code': error.code,
             'description': error.description,
-            'message': error.message.replace('\n', '').strip()
+            'message': str(error).replace('\n', '').strip()
         }
     }
 
 
 def validate_ivorn(url_encoded_ivorn):
     if url_encoded_ivorn and current_app.config.get('APACHE_NODECODE'):
-        ivorn = urllib.unquote(url_encoded_ivorn)
+        ivorn = unquote(url_encoded_ivorn)
     else:
         ivorn = url_encoded_ivorn
     if ivorn is None:
@@ -123,7 +129,6 @@ def page_not_found(abort_error):
                                endpoints=[str(r) for r in get_apiv1_rules()],
                                ), abort_error.code
     else:
-
         return jsonify(error_to_dict(abort_error)), abort_error.code
 
 
@@ -170,7 +175,7 @@ class ListIvorn(ListQueryView):
         """
         raw_results = query.all()
         if len(raw_results):
-            return zip(*raw_results)[0]
+            return list(zip(*raw_results))[0]
         else:
             return raw_results
 

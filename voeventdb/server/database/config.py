@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 import getpass
 import os
 import subprocess
@@ -33,7 +33,7 @@ def make_testdb_url(dbsuffix):
 
 
 pg_sharedir = subprocess.check_output(['pg_config', '--sharedir']).strip()
-q3c_batchfile_path = os.path.join(pg_sharedir, 'contrib', 'q3c.sql')
+q3c_batchfile_path = os.path.join(pg_sharedir, b'contrib', b'q3c.sql')
 
 if not on_rtd:
     try:

@@ -110,7 +110,7 @@ class Voevent(Base, OdictMixin):
     author_datetime = Column(sql.DateTime(timezone=True))
     # Finally, the raw XML. Mark this for lazy-loading, cf:
     # http://docs.sqlalchemy.org/en/latest/orm/loading_columns.html
-    xml = deferred(Column(sql.Unicode))
+    xml = deferred(Column(sql.LargeBinary))
 
     cites = relationship("Cite", backref=backref('voevent', order_by=id),
                          cascade="all, delete, delete-orphan")

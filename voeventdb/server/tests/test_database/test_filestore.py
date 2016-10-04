@@ -9,6 +9,7 @@ import tarfile
 import voeventdb.server.utils.filestore as filestore
 import voeventdb.server.database.models as models
 import voeventparse as vp
+import six
 from voeventdb.server.tests.resources.datapaths import (
     assasn_non_ascii_packet_filepath,
 )
@@ -32,18 +33,17 @@ def test_simple_tarball_dump(named_temporary_file):
 
 def test_bytestring_to_tar_tuple():
     path = '/foo/bar/baz'
-    bytestring = 'foobar'
+    bytestring = b'foobar'
     filestore.bytestring_to_tar_tuple(path, bytestring)
 
     bytestring = u'foobar€€€'.encode('UTF-8')
     filestore.bytestring_to_tar_tuple(path, bytestring)
 
 
-@pytest.mark.xfail
 def test_unicode_to_tar_tuple():
     path = '/foo/bar/baz'
-    accidental_unicode = u'foobar€€€'
-    filestore.bytestring_to_tar_tuple(path, accidental_unicode)
+    string_containing_unicode = u'foobar€€€'
+    filestore.bytestring_to_tar_tuple(path, string_containing_unicode.encode('utf-8'))
 
 
 def test_unicode_voevent_tarball_dump(named_temporary_file):
@@ -70,14 +70,9 @@ def test_tarball_round_trip(named_temporary_file, fixture_db_session):
     voevent_rowgen = list(models.Voevent.from_etree(v) for v in voevent_etrees)
     assert voevent_dbrows[0].ivorn == voevent_rowgen[0].ivorn
     assert voevent_dbrows[0].xml == voevent_rowgen[0].xml
-    # Here's the crux
-    # A newly instantiated model will store a string type same as Python 2;
-    # bytestring stores as bytestring, unicode as unicode.
-    # However, after a round-trip to the database, proper typing has been
-    # asserted and the bytestring is returned as unicode!
-    assert type(voevent_dbrows[0].xml) != type(voevent_rowgen[0].xml)
-    assert type(voevent_rowgen[0].xml) == str
-    assert type(voevent_dbrows[0].xml) == unicode
+
+    assert type(voevent_dbrows[0].xml) == type(voevent_rowgen[0].xml)
+    assert type(voevent_rowgen[0].xml) == six.binary_type
 
     # Therefore it's crucial to test with an actual round-tripped dataset,
     # the 'voevent_dbrows' from above:

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 from voeventdb.server.database.models import Voevent, Cite, Coord
 from voeventdb.server.database.query import coord_cone_search_clause
 import voeventdb.server.restapi.v1.apierror as apierror
@@ -8,7 +8,11 @@ import iso8601
 from sqlalchemy import (or_, and_, exists,
                         )
 from sqlalchemy.orm import aliased
-import urllib
+import six
+if six.PY3:
+    from urllib.parse import quote_plus
+else:
+    from urllib import quote_plus
 from flask import json
 
 
@@ -207,14 +211,14 @@ class IvornPrefix(QueryFilter):
     Note that the value passed should be URL-encoded if it contains
     the ``#`` character e.g.::
 
-        urllib.quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
+        quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
 
 
     """
     querystring_key = 'ivorn_prefix'
     example_values = [
         'ivo://nasa.gsfc.gcn',
-        urllib.quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
+        quote_plus('ivo://nvo.caltech/voeventnet/catot#1404')
     ]
 
     def filter(self, filter_value):
@@ -258,8 +262,8 @@ class RefContains(QueryFilter):
     """
     querystring_key = 'ref_contains'
     example_values = [
-        urllib.quote_plus('BAT_GRB_Pos'),
-        urllib.quote_plus('GBM_Alert'),
+        quote_plus('BAT_GRB_Pos'),
+        quote_plus('GBM_Alert'),
     ]
 
     def filter(self, filter_value):
@@ -280,8 +284,8 @@ class RefExact(QueryFilter):
     """
     querystring_key = 'ref_exact'
     example_values = [
-        urllib.quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
-        urllib.quote_plus(
+        quote_plus('ivo://nasa.gsfc.gcn/SWIFT#BAT_GRB_Pos_649113-680'),
+        quote_plus(
             'ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2015-08-10T14:49:38.83_460910982_1-814'),
     ]
 

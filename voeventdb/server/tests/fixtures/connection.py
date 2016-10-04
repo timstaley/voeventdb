@@ -80,7 +80,7 @@ class SimpleDbFixture:
         self.cite_counts[ref_ivorn] = self.cite_counts[ref_ivorn] + 1
         self.followup_packets.append(packet.attrib['ivorn'])
         vp.add_citations(packet,
-                         vp.Citation(
+                         vp.EventIvorn(
                              ref_ivorn,
                              vp.definitions.cite_types.followup)
                          )

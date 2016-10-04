@@ -1,21 +1,19 @@
 #!/usr/bin/env python
 
-import sys
-import os
 import argparse
 import logging
 import logging.handlers
+import os
+import sys
 
+import six
+import voeventparse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from voeventdb.server.database import db_utils
-from voeventdb.server.database.models import Voevent
 import voeventdb.server.database.config as dbconfig
 import voeventdb.server.database.convenience as conv
-
-import voeventparse
-import os
+from voeventdb.server.database import db_utils
 
 
 def handle_args():
@@ -60,8 +58,6 @@ def setup_logging(logfile_path):
     std_formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(message)s',
                                       date_fmt)
 
-
-
     # Get to the following size before splitting log into multiple files:
     log_chunk_bytesize = 5e6
 
@@ -92,8 +88,11 @@ def main():
     dburl = dbconfig.make_db_url(dbconfig.default_admin_db_params, args.dbname)
     if not db_utils.check_database_exists(dburl):
         raise RuntimeError("Database not found")
+    if six.PY3:
+        stdin = sys.stdin.buffer.read()
+    else:
+        stdin = sys.stdin.read()  # Py2
 
-    stdin = sys.stdin.read()
     v = voeventparse.loads(stdin)
 
     session = Session(bind=create_engine(dburl))

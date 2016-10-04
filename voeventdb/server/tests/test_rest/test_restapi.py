@@ -13,7 +13,12 @@ from voeventdb.server.tests.fixtures.fake import heartbeat_packets
 import voeventdb.server.restapi.default_config as rest_app_config
 import voeventparse as vp
 import json
-import urllib
+import six
+
+if six.PY3:
+    from urllib.parse import quote_plus, urlencode
+else:
+    from urllib import quote_plus, urlencode
 from flask import url_for, request
 import iso8601
 
@@ -34,7 +39,7 @@ class TestWithEmptyDatabase:
 
     def test_api_count(self):
         rv = self.c.get(url_for(apiv1.name + '.' + views.Count.view_name))
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         assert rv.status_code == 200
         assert rv.mimetype == 'application/json'
         assert rd[ResultKeys.result] == 0
@@ -45,7 +50,7 @@ class TestWithEmptyDatabase:
 
     def test_ivorn_not_found(self):
         rv = self.c.get(url_for(apiv1.name + '.packet_xml') +
-                        urllib.quote_plus('foobar_invalid_ivorn'))
+                        quote_plus('foobar_invalid_ivorn'))
         assert rv.status_code == 422
 
 
@@ -57,7 +62,7 @@ class TestWithSimpleDatabase:
     def test_unfiltered_count(self, simple_populated_db):
         dbinf = simple_populated_db
         rv = self.c.get(url_for(apiv1.name + '.' + views.Count.view_name))
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         # print rd
         assert rv.status_code == 200
         assert rd[ResultKeys.result] == dbinf.n_inserts
@@ -79,25 +84,25 @@ class TestWithSimpleDatabase:
             # print "ARGS:", request.args
 
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         assert len(qualifying_packets)
         # date bounds are inclusive:
         assert rd[ResultKeys.result] == len(qualifying_packets)
         assert rd[ResultKeys.querystring] == dict(
-                authored_until=[authored_until_dt.isoformat(), ])
+            authored_until=[authored_until_dt.isoformat(), ])
 
     def test_count_w_multiquery(self, simple_populated_db):
         dbinf = simple_populated_db
         qry_url = (
             url_for(apiv1.name + '.' + views.Count.view_name)
             + '?' +
-            urllib.urlencode((('role', 'test'),
-                              ('role', 'utility'),
-                              ('role', 'observation')))
+            urlencode((('role', 'test'),
+                       ('role', 'utility'),
+                       ('role', 'observation')))
         )
         rv = self.c.get(qry_url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         assert rd[ResultKeys.result] == dbinf.n_inserts
 
     def test_ivornlist(self, simple_populated_db):
@@ -105,32 +110,31 @@ class TestWithSimpleDatabase:
         ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name)
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         assert rd[ResultKeys.result] == dbinf.inserted_ivorns
 
     def test_row_limit(self, simple_populated_db):
         maxlimit = rest_app_config.MAX_QUERY_LIMIT
-        #Limit at max should be OK:
+        # Limit at max should be OK:
         ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
-                                 **{PaginationKeys.limit : maxlimit})
+                                 **{PaginationKeys.limit: maxlimit})
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 200
-        #Limit at max+1 should fail, 413:
+        # Limit at max+1 should fail, 413:
         ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
-                                 **{PaginationKeys.limit : maxlimit+1})
+                                 **{PaginationKeys.limit: maxlimit + 1})
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 413
 
-        #Non-integer values should return a 400
+        # Non-integer values should return a 400
         ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
-                                 **{PaginationKeys.limit : 'foobar'})
+                                 **{PaginationKeys.limit: 'foobar'})
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 400
         ivorn_list_url = url_for(apiv1.name + '.' + views.ListIvorn.view_name,
-                                 **{PaginationKeys.limit : '1.23'})
+                                 **{PaginationKeys.limit: '1.23'})
         rv = self.c.get(ivorn_list_url)
         assert rv.status_code == 400
-
 
     def test_consistent_ordering(self, simple_populated_db):
         """
@@ -156,7 +160,7 @@ class TestWithSimpleDatabase:
                 # print "URL", url
                 rv = self.c.get(url)
                 # print "ARGS:", request.args
-            rd = json.loads(rv.data)
+            rd = json.loads(rv.data.decode())
             rows = rd[ResultKeys.result]
             assert len(rows) == 3
             result_sets.append(rows)
@@ -173,14 +177,14 @@ class TestWithSimpleDatabase:
         """
         with self.c as c:
             url = url_for(
-                    apiv1.name + '.' + views.ListIvornReferenceCount.view_name,
-                    **{PaginationKeys.order: OrderValues.id}
+                apiv1.name + '.' + views.ListIvornReferenceCount.view_name,
+                **{PaginationKeys.order: OrderValues.id}
             )
             rv = self.c.get(url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         ivorn_refcounts = rd[ResultKeys.result]
-        counts = zip(*ivorn_refcounts)[1]
+        counts = list(zip(*ivorn_refcounts))[1]
         assert sum(counts) == simple_populated_db.n_citations
         for ivorn, refcount in ivorn_refcounts:
             assert bool(refcount) == (
@@ -190,50 +194,50 @@ class TestWithSimpleDatabase:
         dbinf = simple_populated_db
 
         n_internal_citations = 0
-        for ivorn, count in dbinf.cite_counts.iteritems():
+        for ivorn, count in dbinf.cite_counts.items():
             if ivorn in dbinf.inserted_ivorns:
                 n_internal_citations += count
 
         with self.c as c:
             url = url_for(
-                    apiv1.name + '.' + views.ListIvornCitedCount.view_name)
+                apiv1.name + '.' + views.ListIvornCitedCount.view_name)
             rv = self.c.get(url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         ivorn_citecounts = rd[ResultKeys.result]
-        counts = zip(*ivorn_citecounts)[1]
+        counts = list(zip(*ivorn_citecounts))[1]
         assert sum(counts) == n_internal_citations
         for ivorn, citecount in ivorn_citecounts:
             assert citecount == dbinf.cite_counts[ivorn]
 
     def test_xml_retrieval(self, simple_populated_db):
         url = url_for(apiv1.name + '.packet_xml')
-        url += urllib.quote_plus(simple_populated_db.absent_ivorn)
+        url += quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         present_ivorn = simple_populated_db.inserted_ivorns[0]
         present_ivorn_xml_content = simple_populated_db.insert_packets_dumps[0]
         url = url_for(apiv1.name + '.packet_xml')
-        url += urllib.quote_plus(present_ivorn)
+        url += quote_plus(present_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
         assert rv.mimetype == 'text/xml'
-        assert rv.data == present_ivorn_xml_content
+        assert rv.data.decode() == present_ivorn_xml_content.decode()
 
     def test_synopsis_view(self, simple_populated_db):
         # Null case, ivorn not in DB:
         ep_url = url_for(apiv1.name + '.packet_synopsis')
-        url = ep_url + urllib.quote_plus(simple_populated_db.absent_ivorn)
+        url = ep_url + quote_plus(simple_populated_db.absent_ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 422
 
         # Positive case, ivorn which has references:
         ivorn_w_refs = list(simple_populated_db.followup_packets)[0]
-        url = ep_url + urllib.quote_plus(ivorn_w_refs)
+        url = ep_url + quote_plus(ivorn_w_refs)
         rv = self.c.get(url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         full = rd[ResultKeys.result]
         etree = simple_populated_db.packet_dict[ivorn_w_refs]
         assert len(full['refs']) == len(Cite.from_etree(etree))
@@ -241,12 +245,12 @@ class TestWithSimpleDatabase:
         # Negative case, IVORN present but packet contains no references
         all_ivorns = set(simple_populated_db.packet_dict.keys())
         ivorns_wo_refs = list(
-                all_ivorns - set(simple_populated_db.followup_packets))
+            all_ivorns - set(simple_populated_db.followup_packets))
         ivorn = ivorns_wo_refs[0]
-        url = ep_url + urllib.quote_plus(ivorn)
+        url = ep_url + quote_plus(ivorn)
         rv = self.c.get(url)
         assert rv.status_code == 200
-        rd = json.loads(rv.data)
+        rd = json.loads(rv.data.decode())
         full = rd[ResultKeys.result]
         assert len(full['refs']) == 0
 
@@ -265,11 +269,11 @@ class TestWithSimpleDatabase:
                 if ref_string in r.ref_ivorn:
                     matches.append(r)
                     continue
-        matched_via_restapi = json.loads(rv.data)[ResultKeys.result]
+        matched_via_restapi = json.loads(rv.data.decode())[ResultKeys.result]
         assert len(matched_via_restapi) == len(matches)
-        url = ep_url + urllib.quote_plus(matched_via_restapi[0])
+        url = ep_url + quote_plus(matched_via_restapi[0])
         rv = self.c.get(url)
-        rd = json.loads(rv.data)[ResultKeys.result]
+        rd = json.loads(rv.data.decode())[ResultKeys.result]
         # When referencing a Swift alert, we should annotate for two urls,
         # GCN.gsfc.nasa.gov / www.swift.ac.uk
         assert len(rd['relevant_urls']) == 2
@@ -283,17 +287,17 @@ class TestSpatialFilters:
         n_packets = 17
         packets = heartbeat_packets(n_packets=n_packets)
         for counter, pkt in enumerate(packets, start=1):
-            packet_dec = 180.0 / n_packets * counter -90
+            packet_dec = 180.0 / n_packets * counter - 90
             coords = vp.Position2D(
-                    ra=15, dec=packet_dec, err=0.1,
-                    units=vp.definitions.units.degrees,
-                    system=vp.definitions.sky_coord_system.utc_icrs_geo)
+                ra=15, dec=packet_dec, err=0.1,
+                units=vp.definitions.units.degrees,
+                system=vp.definitions.sky_coord_system.utc_icrs_geo)
             # print "Inserting coords", coords
             vp.add_where_when(
-                    pkt,
-                    coords=coords,
-                    obs_time=iso8601.parse_date(pkt.Who.Date.text),
-                    observatory_location=vp.definitions.observatory_location.geosurface
+                pkt,
+                coords=coords,
+                obs_time=iso8601.parse_date(pkt.Who.Date.text),
+                observatory_location=vp.definitions.observatory_location.geosurface
             )
         self.packets = packets
         self.ivorn_dec_map = {}
@@ -309,7 +313,7 @@ class TestSpatialFilters:
                       )
         with self.c as c:
             rv = self.c.get(url)
-        rd = json.loads(rv.data)[ResultKeys.result]
+        rd = json.loads(rv.data.decode())[ResultKeys.result]
         matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
                            if self.ivorn_dec_map[ivorn] > min_dec]
         assert len(rd) == len(matching_ivorns)
@@ -322,7 +326,7 @@ class TestSpatialFilters:
                       )
         with self.c as c:
             rv = self.c.get(url)
-        rd = json.loads(rv.data)[ResultKeys.result]
+        rd = json.loads(rv.data.decode())[ResultKeys.result]
         matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
                            if self.ivorn_dec_map[ivorn] < max_dec]
         assert len(rd) == len(matching_ivorns)
@@ -337,7 +341,7 @@ class TestSpatialFilters:
                       )
         with self.c as c:
             rv = self.c.get(url)
-        rd = json.loads(rv.data)[ResultKeys.result]
+        rd = json.loads(rv.data.decode())[ResultKeys.result]
         matching_ivorns = [ivorn for ivorn in self.ivorn_dec_map
                            if self.ivorn_dec_map[ivorn] < max_dec
                            and self.ivorn_dec_map[ivorn] > min_dec

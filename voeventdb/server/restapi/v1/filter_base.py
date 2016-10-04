@@ -78,7 +78,7 @@ def apply_filters(query, args):
     Apply all QueryFilters, validating the querystring in the process.
     """
     pre_joins = []
-    for querystring_key, filter_value in args.iteritems(multi=True):
+    for querystring_key, filter_value in args.items(multi=True):
         if querystring_key in filter_registry:
             cls_inst = filter_registry[querystring_key]
             query = cls_inst.apply_filter(query, args, pre_joins)
