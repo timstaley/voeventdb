@@ -21,7 +21,7 @@ from collections import defaultdict
 # first fixture!) and we hit a database contention lock-up.
 # For now, we just make it module-level.
 #
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def empty_db_connection():
     """
     Connect to db, create tables and begin connection-level (outer) transaction.
@@ -57,7 +57,7 @@ def empty_db_connection():
     engine.dispose()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def fixture_db_session(empty_db_connection):
     """
     Provide a Session connected to the empty database.

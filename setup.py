@@ -19,7 +19,7 @@ install_requires = [
 ]
 
 test_requires = [
-    'pytest',
+    'pytest>3',
     'pytest-capturelog',
     'tox',
 ]

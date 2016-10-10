@@ -7,7 +7,7 @@ from voeventdb.server.tests.fixtures.connection import (
 
 from voeventdb.server.restapi.app import app
 
-@pytest.yield_fixture
+@pytest.fixture
 def flask_test_client(fixture_db_session):
     # print
     # print "setting up flask client"

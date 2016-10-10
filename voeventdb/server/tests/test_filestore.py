@@ -8,7 +8,7 @@ import voeventdb.server.utils.filestore as filestore
 import voeventparse as vp
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def named_temporary_file():
     temp_file = tempfile.NamedTemporaryFile(delete=False)
     temp_file.close()
