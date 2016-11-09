@@ -1,19 +1,20 @@
 from __future__ import absolute_import
+
+import pytest
+import voeventdb.server.tests.fixtures.fake as fake
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
-
 from voeventdb.server.database.models import Voevent, Cite, Coord
+from voeventdb.server.database.query import coord_cone_search_clause
 from voeventdb.server.tests.resources import (
+    gaia_16bsg,
     swift_bat_grb_pos_v2_etree,
     swift_bat_grb_655721,
     swift_xrt_grb_655721,
     konus_lc
 )
-from voeventdb.server.database.query import coord_cone_search_clause
-import voeventdb.server.tests.fixtures.fake as fake
-import voeventparse as vp
 
-import pytest
+import voeventparse as vp
 
 
 def test_empty_table_present(fixture_db_session):
@@ -24,7 +25,7 @@ def test_empty_table_present(fixture_db_session):
     results = s.query(Voevent).all()
     assert results == []
 
-    #Check q3c functions loaded
+    # Check q3c functions loaded
     q3c_version = s.query(func.q3c_version()).all()
     # print q3c_version
 
@@ -117,28 +118,29 @@ class TestCiteInserts:
         assert backref_voevent.id == xcheck_voevent_id
         assert backref_voevent.ivorn == swift_xrt_grb_655721.attrib['ivorn']
 
-class TestCoordInserts:
+
+class TestUtcTimescaleCoordInserts:
     """
     Check that coords get inserted correctly
+
+    These packets use the most common timestamp standard: UTC timescale.
     """
 
     @pytest.fixture(autouse=True)
     def insert_voevents(self, fixture_db_session):
         """
-        Insert two Vovents (GRB, XRT followup) as setup
-
-        (NB XRT packet cites -> BAT packet.)
+        Insert two Vovents (mostly blank 'heartbeat' packet, GRB) as setup
         """
         s = fixture_db_session
         assert len(s.query(Voevent).all()) == 0  # sanity check
         s.add(Voevent.from_etree(fake.heartbeat_packets()[0]))
         s.add(Voevent.from_etree(swift_bat_grb_655721))
         s.flush()
-        assert len(s.query(Voevent).all()) == 2 # 1 with, 1 without position
+        assert len(s.query(Voevent).all()) == 2  # 1 with, 1 without position
 
     def test_coord_parsing(self):
         positions_parsed = Coord.from_etree(swift_bat_grb_655721)
-        assert len(positions_parsed)==1
+        assert len(positions_parsed) == 1
 
     def test_coords_loaded(self, fixture_db_session):
         s = fixture_db_session
@@ -168,14 +170,36 @@ class TestCoordInserts:
     def test_spatial_query(self, fixture_db_session):
         s = fixture_db_session
         posn = vp.pull_astro_coords(swift_bat_grb_655721)
-        #Cone search centred on the known co-ords should return the row:
+        # Cone search centred on the known co-ords should return the row:
         results = s.query(Coord).filter(
-            coord_cone_search_clause(posn.ra, posn.dec,0.5)).all()
+            coord_cone_search_clause(posn.ra, posn.dec, 0.5)).all()
         assert len(results) == 1
-        #Now bump the cone to the side (so not matching) and check null return
+        # Now bump the cone to the side (so not matching) and check null return
         results = s.query(Coord).filter(
-            coord_cone_search_clause(posn.ra, posn.dec+1.0,0.5)).all()
+            coord_cone_search_clause(posn.ra, posn.dec + 1.0, 0.5)).all()
         assert len(results) == 0
+
+
+class TestTdbTimescaleCoordInserts:
+    """
+    Check that coords get inserted correctly
+
+    GAIA packets use the TDB timescale for their event timestamps.
+    """
+
+    def test_insert_tdb_timestamp_voevent(self, fixture_db_session):
+        """
+        Insert Gaia packet
+        """
+        s = fixture_db_session
+        assert len(s.query(Voevent).all()) == 0  # sanity check
+        s.add(Voevent.from_etree(gaia_16bsg))
+        s.flush()
+        assert len(s.query(Voevent).all()) == 1
+
+        positions_parsed = Coord.from_etree(gaia_16bsg)
+        assert len(positions_parsed) == 1
+
 
 def test_bad_coord_rejection():
     v = Voevent.from_etree(konus_lc)

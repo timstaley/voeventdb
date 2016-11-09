@@ -1,5 +1,6 @@
 import voeventparse
 from voeventdb.server.tests.resources.datapaths import (
+    gaia_16bsf_filepath,
     konus_lc_filepath,
     swift_bat_grb_pos_v2_filepath,
     swift_bat_grb_655721_filepath,
@@ -17,3 +18,5 @@ with open(swift_xrt_grb_655721_filepath) as f:
 with open(konus_lc_filepath) as f:
     konus_lc = voeventparse.load(f)
 
+with open(gaia_16bsf_filepath, 'rb') as f:
+    gaia_16bsg = voeventparse.load(f)

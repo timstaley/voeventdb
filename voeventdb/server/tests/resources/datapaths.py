@@ -12,3 +12,5 @@ swift_xrt_grb_655721_filepath = os.path.join(data_dir, 'XRT_Pos_655721-326.xml')
 
 konus_lc_filepath = os.path.join(data_dir,
                                  'Konus_Lightcurve_2015-07-10T00:28:01.68.xml')
+
+gaia_16bsf_filepath = os.path.join(data_dir, 'Gaia16bsf.xml')
