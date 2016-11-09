@@ -298,6 +298,22 @@ class Coord(Base, OdictMixin):
     def from_etree(root):
         """
         Load up the coords, if present, for initializing with the Voevent.
+
+        .. note::
+
+            Current implementation is quite slack with regard to co-ordinate
+            systems - it is assumed that, for purposes of searching the database
+            using spatial queries, the FK5 / ICRS reference systems and and
+            geocentric/barycentric reference frames are sufficiently similar
+            that we can just take the RA/Dec and insert it 'as-is' into the
+            database.
+
+            This is partly justified on the assumption that anyone in
+            need of ultra-high precision co-ordinates will need to take
+            account of mission specific properties anyway (e.g. position
+            of GAIA at time of detection) and so will only be using the
+            spatial query for a coarse search, then parsing packets
+            to determine precise locations.
         """
 
         acceptable_coord_systems = (
@@ -305,6 +321,8 @@ class Coord(Base, OdictMixin):
             vp.definitions.sky_coord_system.utc_fk5_topo,
             vp.definitions.sky_coord_system.utc_icrs_geo,
             vp.definitions.sky_coord_system.utc_icrs_topo,
+            vp.definitions.sky_coord_system.tdb_fk5_bary,
+            vp.definitions.sky_coord_system.tdb_icrs_bary,
         )
 
         position_list = []

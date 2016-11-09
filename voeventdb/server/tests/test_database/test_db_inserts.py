@@ -196,9 +196,10 @@ class TestTdbTimescaleCoordInserts:
         s.add(Voevent.from_etree(gaia_16bsg))
         s.flush()
         assert len(s.query(Voevent).all()) == 1
-
         positions_parsed = Coord.from_etree(gaia_16bsg)
         assert len(positions_parsed) == 1
+        gaia_posn = positions_parsed[0]
+        assert gaia_posn.time is not None
 
 
 def test_bad_coord_rejection():

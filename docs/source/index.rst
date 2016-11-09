@@ -11,6 +11,7 @@ Contents:
 
     overview/index
     apiv1/index
+    changelog
 
 
 
