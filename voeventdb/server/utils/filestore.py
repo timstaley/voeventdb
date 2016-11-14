@@ -1,5 +1,5 @@
 import tarfile
-from cStringIO import StringIO
+from io import BytesIO
 import voeventparse
 import os
 
@@ -21,7 +21,7 @@ def bytestring_to_tar_tuple(filename, bytes):
     """
     info = tarfile.TarInfo(filename)
     info.size = len(bytes)
-    return info, StringIO(bytes)
+    return info, BytesIO(bytes)
 
 
 def filename_from_ivorn(ivorn):
