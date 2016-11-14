@@ -1,15 +1,17 @@
 import voeventparse
 from voeventdb.server.tests.resources.datapaths import (
+    assasn_non_ascii_packet_filepath,
     gaia_16bsf_filepath,
     konus_lc_filepath,
     swift_bat_grb_pos_v2_filepath,
     swift_bat_grb_655721_filepath,
     swift_xrt_grb_655721_filepath
 )
+
 with open(swift_bat_grb_pos_v2_filepath) as f:
     swift_bat_grb_pos_v2_etree = voeventparse.load(f)
 
-#NB xrt_grb_655721 cites -> bat_grb_655721
+# NB xrt_grb_655721 cites -> bat_grb_655721
 with open(swift_bat_grb_655721_filepath) as f:
     swift_bat_grb_655721 = voeventparse.load(f)
 with open(swift_xrt_grb_655721_filepath) as f:

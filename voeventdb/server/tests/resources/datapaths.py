@@ -14,3 +14,7 @@ konus_lc_filepath = os.path.join(data_dir,
                                  'Konus_Lightcurve_2015-07-10T00:28:01.68.xml')
 
 gaia_16bsf_filepath = os.path.join(data_dir, 'Gaia16bsf.xml')
+
+assasn_non_ascii_packet_filepath = os.path.join(
+    data_dir,
+    'ASASSN#2016-09-25.47_2016fvf_PTSS-16nqb_PS16ejf.xml')
