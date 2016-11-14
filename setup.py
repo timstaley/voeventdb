@@ -42,7 +42,7 @@ setup(
     description="Data-store and accompanying RESTful query API for archiving "
                 "and retrieving VOEvent packets.",
     author="Tim Staley",
-    author_email="timstaley337@gmail.com",
+    author_email="github@timstaley.co.uk",
     url="https://github.com/timstaley/voeventdb",
     packages=packages,
     package_data={'voeventdb.server':['tests/resources/*.xml',
