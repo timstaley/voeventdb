@@ -1,3 +1,2 @@
 include versioneer.py
-include voeventdb/_version.py
 include voeventdb/server/_version.py

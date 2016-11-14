@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import pytest
 import voeventdb.server.tests.fixtures.fake as fake
+import voeventparse as vp
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from voeventdb.server.database.models import Voevent, Cite, Coord
@@ -13,8 +14,6 @@ from voeventdb.server.tests.resources import (
     swift_xrt_grb_655721,
     konus_lc
 )
-
-import voeventparse as vp
 
 
 def test_empty_table_present(fixture_db_session):
@@ -55,6 +54,7 @@ class TestBasicInsert:
             # Should throw, breaks unique IVORN constraint:
             s.add(Voevent.from_etree(swift_bat_grb_pos_v2_etree))
             s.flush()
+
 
 
 def test_cite_load_from_etree(fixture_db_session):

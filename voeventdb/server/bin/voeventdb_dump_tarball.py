@@ -2,7 +2,6 @@
 
 import argparse
 import datetime
-import gc
 import logging
 import os
 import sys
@@ -11,12 +10,13 @@ import textwrap
 import iso8601
 import pytz
 import voeventdb.server.database.config as dbconfig
-from argparse import RawTextHelpFormatter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from voeventdb.server.database import db_utils
 from voeventdb.server.database.models import Voevent
-from voeventdb.server.utils.filestore import write_tarball
+from voeventdb.server.utils.filestore import (
+    write_tarball,
+)
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('iso8601').setLevel(
@@ -137,8 +137,8 @@ def main():
     while n_packets_written < n_matching:
         logger.debug("Fetching batch of up to {} packets".format(args.nsplit))
         voevents = qry.limit(args.nsplit).offset(n_packets_written).all()
-        ivorn_xml_tuples_gen = ((v.ivorn, v.xml) for v in voevents)
-        n_packets_written += write_tarball(ivorn_xml_tuples_gen,
+
+        n_packets_written += write_tarball(voevents,
                                            get_tarfile_path())
         elapsed = (datetime.datetime.now() - start_time).total_seconds()
         logger.info(
