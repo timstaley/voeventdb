@@ -9,7 +9,9 @@ import tarfile
 import voeventdb.server.utils.filestore as filestore
 import voeventdb.server.database.models as models
 import voeventparse as vp
-from voeventdb.server.tests.resources.datapaths import assasn_non_ascii_packet_filepath
+from voeventdb.server.tests.resources.datapaths import (
+    assasn_non_ascii_packet_filepath,
+)
 
 @pytest.fixture
 def named_temporary_file():
@@ -64,7 +66,7 @@ def test_tarball_round_trip(named_temporary_file, fixture_db_session):
         s.add(models.Voevent.from_etree(etree))
     s.flush()
     voevent_dbrows = s.query(models.Voevent.ivorn, models.Voevent.xml).all()
-    assert len(voevent_dbrows)==len(voevent_etrees)
+    assert len(voevent_dbrows) == len(voevent_etrees)
     voevent_rowgen = list(models.Voevent.from_etree(v) for v in voevent_etrees)
     assert voevent_dbrows[0].ivorn == voevent_rowgen[0].ivorn
     assert voevent_dbrows[0].xml == voevent_rowgen[0].xml
@@ -73,8 +75,9 @@ def test_tarball_round_trip(named_temporary_file, fixture_db_session):
     # bytestring stores as bytestring, unicode as unicode.
     # However, after a round-trip to the database, proper typing has been
     # asserted and the bytestring is returned as unicode!
-
     assert type(voevent_dbrows[0].xml) != type(voevent_rowgen[0].xml)
+    assert type(voevent_rowgen[0].xml) == str
+    assert type(voevent_dbrows[0].xml) == unicode
 
     # Therefore it's crucial to test with an actual round-tripped dataset,
     # the 'voevent_dbrows' from above:

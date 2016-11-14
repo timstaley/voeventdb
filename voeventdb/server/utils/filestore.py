@@ -50,6 +50,17 @@ def voevent_dbrow_to_ivorn_xml_tuple(voevent):
         voevent (:class:`voeventdb.server.database.models.Voevent`): Voevent
             model / data-tuple as retrieved from the database
     """
+    # This is a horrible kludge, we should know whether the datatype is
+    # a bytestring or unicode string by design. (In practice, the uncertainty
+    # is only encountered during unit-tests, all real-world usage deals with
+    # the unicode case. But that means the tests didn't catch bugs!)
+    # It will do as a temporary fix, to allow data-dumps from the live
+    # database.
+    # Will soon port to Python3 with Postgres BYTEA storage and get things properly
+    # configured.
+    xml = voevent.xml
+    if isinstance(xml, unicode):
+        return (voevent.ivorn, voevent.xml.encode('utf-8'))
     return (voevent.ivorn, voevent.xml)
 
 
