@@ -14,7 +14,7 @@ install_requires = [
     'pytz',
     'SQLAlchemy',
     'simplejson',
-    'voevent-parse>=0.9.8',
+    'voevent-parse>=1.0.1',
     'six',
 ]
 

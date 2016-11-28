@@ -298,7 +298,7 @@ class TestSpatialFilters:
         self.packets = packets
         self.ivorn_dec_map = {}
         for pkt in self.packets:
-            posn = vp.pull_astro_coords(pkt)
+            posn = vp.get_event_position(pkt)
             self.ivorn_dec_map[pkt.attrib['ivorn']] = posn.dec
             fixture_db_session.add(Voevent.from_etree(pkt))
 

@@ -56,7 +56,6 @@ class TestBasicInsert:
             s.flush()
 
 
-
 def test_cite_load_from_etree(fixture_db_session):
     assert len(Cite.from_etree(swift_bat_grb_655721)) == 0
     assert len(Cite.from_etree(swift_xrt_grb_655721)) == 1
@@ -146,16 +145,16 @@ class TestUtcTimescaleCoordInserts:
         s = fixture_db_session
         n_total_coords = s.query(Coord).count()
         assert n_total_coords == 1
-        grb_packet_coords = s.query(Voevent). \
-            filter(Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']). \
-            one().coords
+        grb_packet_coords = s.query(Voevent).filter(
+            Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']
+        ).one().coords
         assert len(grb_packet_coords) == 1
         coord0 = grb_packet_coords[0]
         bat_voevent_id = s.query(Voevent.id).filter(
             Voevent.ivorn == swift_bat_grb_655721.attrib['ivorn']
         ).scalar()
         assert coord0.voevent_id == bat_voevent_id
-        position = vp.pull_astro_coords(swift_bat_grb_655721)
+        position = vp.get_event_position(swift_bat_grb_655721)
         assert coord0.ra == position.ra
         assert coord0.dec == position.dec
         assert coord0.error == position.err
@@ -169,7 +168,7 @@ class TestUtcTimescaleCoordInserts:
 
     def test_spatial_query(self, fixture_db_session):
         s = fixture_db_session
-        posn = vp.pull_astro_coords(swift_bat_grb_655721)
+        posn = vp.get_event_position(swift_bat_grb_655721)
         # Cone search centred on the known co-ords should return the row:
         results = s.query(Coord).filter(
             coord_cone_search_clause(posn.ra, posn.dec, 0.5)).all()

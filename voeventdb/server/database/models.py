@@ -47,9 +47,9 @@ def _has_bad_coords(root, stream):
         return True
     if not stream.split('/')[0] == 'nasa.gsfc.gcn':
         return False
-    what_dict = vp.pull_params(root)
-    if "Coords_String" in what_dict[None]:
-        if (what_dict[None]["Coords_String"]['value'] ==
+    toplevel_params = vp.get_toplevel_params(root)
+    if "Coords_String" in toplevel_params:
+        if (toplevel_params["Coords_String"]['value'] ==
                 "unavailable/inappropriate"):
             return True
 
@@ -331,7 +331,7 @@ class Coord(Base, OdictMixin):
         )
         if astrocoords:
             for idx, entry in enumerate(astrocoords):
-                posn = vp.pull_astro_coords(root,idx)
+                posn = vp.get_event_position(root,idx)
                 if posn.system not in acceptable_coord_systems:
                     raise NotImplementedError(
                         "Loading position from coord-sys "
@@ -345,7 +345,7 @@ class Coord(Base, OdictMixin):
                         "is not yet implemented."
                     )
                 try:
-                    isotime = vp.pull_isotime(root,idx)
+                    isotime = vp.get_event_time_as_utc(root,idx)
                 except:
                     logger.warning(
                         "Error pulling event time for ivorn {}, "

@@ -1,8 +1,18 @@
 Change history
 ==============
 
+1.3.2 (2016/11/28) - Mirror upstream changes in voevent-parse
+-------------------------------------------------------------
+Minor update to mirror API changes in voevent-parse 1.0.
+
+1.3.1 (2016/11/14) - Fix issue with UTF-8 encoded unicode chars in VOEvents
+---------------------------------------------------------------------------
+Fix an issue where non-ascii characters in XML packets broke tarball-dumping,
+because Postgres returns the data as unicode, and we need to explicitly encode
+that to a UTF-8 bytestring before the tarball code will accept it.
+
 1.3.0 (2016/11/09) - Add parsing of barycentric event co-ords
---------------------------------------------------------------
+-------------------------------------------------------------
 Make use of voevent-parse 0.9.8 (and hence astropy 1.2.x) to apply TDB->UTC time
 conversion where relevant (e.g. GAIA event timestamps).
 
