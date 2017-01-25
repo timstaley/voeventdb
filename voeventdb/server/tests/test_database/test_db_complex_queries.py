@@ -33,11 +33,11 @@ class TestConvenienceFuncs:
                          ):
         s = fixture_db_session
         dbinf = simple_populated_db
-        nlogs = len(caplog.records())
-        with caplog.atLevel(logging.WARNING):
+        nlogs = len(caplog.records)
+        with caplog.at_level(logging.WARNING):
             safe_insert_voevent(s, dbinf.insert_packets[0])
-        assert len(caplog.records()) == nlogs + 1
-        assert caplog.records()[-1].levelname == 'WARNING'
+        assert len(caplog.records) == nlogs + 1
+        assert caplog.records[-1].levelname == 'WARNING'
 
         bad_packet = copy.copy(dbinf.insert_packets[0])
         bad_packet.Who.AuthorIVORN = 'ivo://foo.bar'
