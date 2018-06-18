@@ -11,6 +11,10 @@ addons:
 services:
   - postgresql
 
+env:
+  global:
+  - PGPORT=5432
+
 
 language: python
 
