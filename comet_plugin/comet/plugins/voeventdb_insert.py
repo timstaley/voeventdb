@@ -15,7 +15,6 @@ import voeventdb.server.database.config as dbconfig
 from voeventdb.server.database import db_utils
 import voeventdb.server.database.convenience as dbconv
 
-
 voeventdb_dbname = os.environ.get("VOEVENTDB_DBNAME",
                                   dbconfig.testdb_corpus_url.database)
 
@@ -24,6 +23,7 @@ if not db_utils.check_database_exists(dburl):
     log.warn("voeventdb database not found: {}".format(
         voeventdb_dbname))
 dbengine = create_engine(dburl)
+
 
 @implementer(IPlugin, IHandler)
 class VoeventdbInserter(object):
@@ -35,15 +35,19 @@ class VoeventdbInserter(object):
         """
         Add an event to the celery processing queue
         """
-        log.debug("Passing to voeventdb: %s" % (event.attrib['ivorn'],))
-        session = Session(bind=dbengine)
+        v = None
         try:
-            v = voeventparse.loads(event.text)
+            session = Session(bind=dbengine)
+            v = voeventparse.loads(event.raw_bytes)
             dbconv.safe_insert_voevent(session, v)
             session.commit()
         except Exception as e:
-            log.warn("Could not insert packet with ivorn {} into database {}".format(
-                v.attrib['ivorn'], voeventdb_dbname))
+            if v is None:
+                log.warn("Could not parse event-bytes as voevent")
+            else:
+                log.warn(
+                    "Could not insert packet with ivorn {} into database {}".format(
+                        v.attrib['ivorn'], voeventdb_dbname))
             self.deferred.errback(e)
 
         log.info("Loaded {} into database {}".format(
