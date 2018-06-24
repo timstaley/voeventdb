@@ -30,8 +30,14 @@ packages = find_packages()
 print()
 print("FOUND PACKAGES: ", packages)
 
-
 scripts = glob.glob('voeventdb/server/bin/*.py')
+
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.6",
+    "Intended Audience :: Science/Research",
+]
 
 setup(
     name="voeventdb.server",
@@ -50,5 +56,6 @@ setup(
                                ]},
     install_requires=install_requires,
     extras_require=extras_require,
-    scripts=scripts
+    scripts=scripts,
+    classifiers = classifiers,
 )
