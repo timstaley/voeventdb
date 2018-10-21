@@ -42,7 +42,7 @@ def safe_insert_voevent(session, etree):
             raise ValueError('Tried to load a VOEvent with duplicate IVORN,'
                              'but XML contents differ - not clear what to do.')
         else:
-            logger.warn('Skipping insert for packet with duplicate IVORN, '
+            logger.warning('Skipping insert for packet with duplicate IVORN, '
                         'XML matches OK.')
 
 

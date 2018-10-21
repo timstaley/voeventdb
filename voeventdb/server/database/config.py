@@ -10,7 +10,7 @@ from sqlalchemy.engine.url import URL
 
 default_username = getpass.getuser()
 default_password = default_username
-drivername = 'postgres'
+drivername = 'postgresql'
 default_host = 'localhost'
 
 default_admin_db_params = dict(drivername=drivername,
